@@ -1,0 +1,57 @@
+apiVersion: 1
+
+datasources:
+  # Wazuh Indexer (OpenSearch) - Security Events
+  - name: Wazuh-OpenSearch
+    type: grafana-opensearch-datasource
+    access: proxy
+    url: https://wazuh1.indexer:9200
+    basicAuth: true
+    basicAuthUser: admin
+    jsonData:
+      tlsSkipVerify: true
+      timeField: "@timestamp"
+      version: "2.11.0"
+      logMessageField: message
+      logLevelField: level
+    secureJsonData:
+      basicAuthPassword: SecretPassword
+    isDefault: false
+    editable: true
+
+  # Zabbix - Infrastructure Metrics
+  - name: Zabbix
+    type: alexanderzobnin-zabbix-datasource
+    access: proxy
+    url: http://zabbix-web:8080/api_jsonrpc.php
+    jsonData:
+      username: Admin
+      trends: true
+      cacheTTL: 60
+    secureJsonData:
+      password: zabbix
+    isDefault: false
+    editable: true
+
+  # PostgreSQL - Direct Zabbix DB Access (optional)
+  - name: Zabbix-PostgreSQL
+    type: postgres
+    access: proxy
+    url: zabbix-postgres:5432
+    database: zabbix
+    user: zabbix
+    jsonData:
+      sslmode: disable
+      postgresVersion: 1600
+    secureJsonData:
+      password: zabbix_password
+    isDefault: false
+    editable: true
+
+  # Prometheus - Container and Host Metrics
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true

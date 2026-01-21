@@ -1,0 +1,4 @@
+core:
+  logging:
+    logsPath: "/var/log/beelzebub/beelzebub.json"
+    debug: false

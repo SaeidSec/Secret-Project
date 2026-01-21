@@ -1,0 +1,32 @@
+<group name="beelzebub,honeypot,">
+  <!-- Catch-all for Beelzebub logs -->
+  <rule id="110000" level="3">
+    <decoded_as>json</decoded_as>
+    <field name="honeypot">beelzebub</field>
+    <description>Beelzebub honeypot event.</description>
+  </rule>
+
+  <!-- Login/Session Start -->
+  <rule id="110001" level="7">
+    <if_sid>110000</if_sid>
+    <field name="msg">^Accepted password|^New session</field>
+    <description>Beelzebub: Honeypot session established (Potential intruder).</description>
+    <group>pci_dss_10.2.4,pci_dss_10.2.5,gpg13_7.1,gpg13_7.2,gdpr_IV_35.7.d,hipaa_164.312.b,nist_800_53_AU.14,nist_800_53_AC.7,tsc_CC6.1,tsc_CC6.8,tsc_CC7.2,tsc_CC7.3,</group>
+  </rule>
+
+  <!-- Command Execution -->
+  <rule id="110002" level="8">
+    <if_sid>110000</if_sid>
+    <field name="command">\.+</field>
+    <description>Beelzebub: Command executed in honeypot: $(command).</description>
+    <group>pci_dss_10.2.7,gpg13_10.1,gdpr_IV_35.7.d,hipaa_164.312.b,nist_800_53_AU.14,nist_800_53_AC.7,tsc_CC6.1,tsc_CC6.8,tsc_CC7.2,tsc_CC7.3,</group>
+  </rule>
+
+  <!-- Failed Login -->
+  <rule id="110003" level="5">
+    <if_sid>110000</if_sid>
+    <field name="msg">^Failed password</field>
+    <description>Beelzebub: Honeypot login attempt failed.</description>
+    <group>invalid_login,authentication_failed,pci_dss_10.2.4,pci_dss_10.2.5,gpg13_7.1,gdpr_IV_35.7.d,hipaa_164.312.b,nist_800_53_AU.14,nist_800_53_AC.7,tsc_CC6.1,tsc_CC6.8,tsc_CC7.2,tsc_CC7.3,</group>
+  </rule>
+</group>

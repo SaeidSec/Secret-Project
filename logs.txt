@@ -1,0 +1,301 @@
+┌──(bear㉿wazuh-master)-[~]
+└─$ sudo su
+
+[sudo] password for bear:
+┌──(root㉿wazuh-master)-[/home/bear]
+└─# ls
+ABUSAEID                                                    Pictures
+Anonymous.nmconnection                                      Public
+anonymous-static-backup.nmconnection                        SQAT-LAB
+antigravity.desktop                                         SQAT-LAB.zip
+chrome-hnpfjngllnobngcgfapefoaidbinmjnm-Profile_1.desktop   Templates
+code.desktop                                                test
+custom                                                      velociraptor-server-0.75.6.amd64.deb
+Desktop                                                     velociraptor-v0.75.6-linux-amd64
+docker_wazuh                                                Videos
+Documents                                                   vmware
+Downloads                                                   wazuh
+'How to install gvm in kali linux'                           wazuh-agent_4.14.1-1_amd64.deb
+Music                                                       wazuh-docker
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─# docker ps
+CONTAINER ID   IMAGE                          COMMAND                  CREATED         STATUS             PORTS                                                             NAMES
+12238682be74   osixia/keepalived:2.0.20       "/container/tool/run"    5 minutes ago   Up 5 minutes                                                                         keepalived-2
+8f77f1d903ce   osixia/keepalived:2.0.20       "/container/tool/run"    5 minutes ago   Up 5 minutes                                                                         keepalived-1
+1907ded61d16   nginx:stable                   "/docker-entrypoint.…"   5 minutes ago   Up 5 minutes       80/tcp                                                            multi-node-nginx-lb-1-1
+1cc599cb5b23   nginx:stable                   "/docker-entrypoint.…"   5 minutes ago   Up 5 minutes       80/tcp                                                            multi-node-nginx-lb-2-1
+6a0934323507   wazuh/wazuh-dashboard:4.14.1   "/entrypoint.sh"         5 minutes ago   Up 5 minutes       443/tcp, 5601/tcp                                                 multi-node-wazuh.dashboard-1
+35772f749817   wazuh/wazuh-indexer:4.14.1     "/entrypoint.sh open…"   5 minutes ago   Up 5 minutes       9200/tcp                                                          multi-node-wazuh3.indexer-1
+161777ce0ff3   wazuh/wazuh-manager:4.14.1     "/init"                  5 minutes ago   Up 5 minutes       1514-1516/tcp, 0.0.0.0:514->514/udp, :::514->514/udp, 55000/tcp   multi-node-wazuh.master-1
+cb348359a6fe   wazuh/wazuh-manager:4.14.1     "/init"                  5 minutes ago   Up 5 minutes       1514-1516/tcp, 514/udp, 55000/tcp                                 multi-node-wazuh.worker-1
+ab6b008aa12f   wazuh/wazuh-indexer:4.14.1     "/entrypoint.sh open…"   5 minutes ago   Up 5 minutes       9200/tcp                                                          multi-node-wazuh2.indexer-1
+38c350597ca9   wazuh/wazuh-indexer:4.14.1     "/entrypoint.sh open…"   5 minutes ago   Up 5 minutes       0.0.0.0:9200->9200/tcp, :::9200->9200/tcp                         multi-node-wazuh1.indexer-1
+1071f37525b4   multi-node-ubuntu-agent        "/entrypoint.sh"         21 hours ago    Up About an hour                                                                     multi-node-ubuntu-agent-1
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─# docker stop multi-node-wazuh.master-1
+multi-node-wazuh.master-1
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─# docker stop multi-node-wazuh.worker-1
+multi-node-wazuh.worker-1
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─# docker start multi-node-wazuh.master-1
+multi-node-wazuh.master-1
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─# docker stop multi-node-nginx-lb-1-1
+
+multi-node-nginx-lb-1-1
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─# docker stop keepalived-1
+
+keepalived-1
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─# docker stop keepalived-2
+keepalived-2
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─# docker stop multi-node-nginx-lb-2-1
+multi-node-nginx-lb-2-1
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─# docker start multi-node-nginx-lb-2-1
+multi-node-nginx-lb-2-1
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─# docker start keepalived-2
+
+Error response from daemon: Container 1cc599cb5b231c444c9e1545f614134af91777e0ed1260d02eb8e31b72598e43 is restarting, wait until the container is running
+Error: failed to start containers: keepalived-2
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─# docker start keepalived-2
+Error response from daemon: Container 1cc599cb5b231c444c9e1545f614134af91777e0ed1260d02eb8e31b72598e43 is restarting, wait until the container is running
+Error: failed to start containers: keepalived-2
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─#
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─#
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─# docker start keepalived-2
+
+Error response from daemon: Container 1cc599cb5b231c444c9e1545f614134af91777e0ed1260d02eb8e31b72598e43 is restarting, wait until the container is running
+Error: failed to start containers: keepalived-2
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─# docker start multi-node-nginx-lb-1-1
+multi-node-nginx-lb-1-1
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─# docker start keepalived-2
+
+Error response from daemon: Container 1cc599cb5b231c444c9e1545f614134af91777e0ed1260d02eb8e31b72598e43 is restarting, wait until the container is running
+Error: failed to start containers: keepalived-2
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─# docker start keepalived-1
+
+Error response from daemon: Container 1907ded61d1661d5537a07fae5e1cf3ca006af1696fec2b25eb95cb630bc5e24 is restarting, wait until the container is running
+Error: failed to start containers: keepalived-1
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─# docker start multi-node-nginx-lb-2-1
+multi-node-nginx-lb-2-1
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─# docker stop multi-node-nginx-lb-1-1
+multi-node-nginx-lb-1-1
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─# docker start multi-node-nginx-lb-1-1
+multi-node-nginx-lb-1-1
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─# docker ps
+
+CONTAINER ID   IMAGE                          COMMAND                  CREATED          STATUS                         PORTS                                                             NAMES
+1907ded61d16   nginx:stable                   "/docker-entrypoint.…"   15 minutes ago   Restarting (1) 1 second ago                                                                      multi-node-nginx-lb-1-1
+1cc599cb5b23   nginx:stable                   "/docker-entrypoint.…"   15 minutes ago   Restarting (1) 5 seconds ago                                                                     multi-node-nginx-lb-2-1
+6a0934323507   wazuh/wazuh-dashboard:4.14.1   "/entrypoint.sh"         15 minutes ago   Up 15 minutes                  443/tcp, 5601/tcp                                                 multi-node-wazuh.dashboard-1
+35772f749817   wazuh/wazuh-indexer:4.14.1     "/entrypoint.sh open…"   15 minutes ago   Up 15 minutes                  9200/tcp                                                          multi-node-wazuh3.indexer-1
+161777ce0ff3   wazuh/wazuh-manager:4.14.1     "/init"                  15 minutes ago   Up 5 minutes                   1514-1516/tcp, 0.0.0.0:514->514/udp, :::514->514/udp, 55000/tcp   multi-node-wazuh.master-1
+ab6b008aa12f   wazuh/wazuh-indexer:4.14.1     "/entrypoint.sh open…"   15 minutes ago   Up 15 minutes                  9200/tcp                                                          multi-node-wazuh2.indexer-1
+38c350597ca9   wazuh/wazuh-indexer:4.14.1     "/entrypoint.sh open…"   15 minutes ago   Up 15 minutes                  0.0.0.0:9200->9200/tcp, :::9200->9200/tcp                         multi-node-wazuh1.indexer-1
+1071f37525b4   multi-node-ubuntu-agent        "/entrypoint.sh"         21 hours ago     Up About an hour                                                                                 multi-node-ubuntu-agent-1
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─# docker start multi-node-wazuh.worker-1
+multi-node-wazuh.worker-1
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─# docker start multi-node-wazuh.master-1
+multi-node-wazuh.master-1
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─# docker start keepalived-1
+
+keepalived-1
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─# docker stop keepalived-1
+keepalived-1
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─# docker stop keepalived-2
+keepalived-2
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─# docker stop multi-node-wazuh.master-1
+multi-node-wazuh.master-1
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─# docker stop multi-node-wazuh.worker-1
+multi-node-wazuh.worker-1
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─# docker ps
+
+CONTAINER ID   IMAGE                          COMMAND                  CREATED          STATUS              PORTS                                       NAMES
+1907ded61d16   nginx:stable                   "/docker-entrypoint.…"   17 minutes ago   Up About a minute   80/tcp                                      multi-node-nginx-lb-1-1
+1cc599cb5b23   nginx:stable                   "/docker-entrypoint.…"   17 minutes ago   Up About a minute   80/tcp                                      multi-node-nginx-lb-2-1
+6a0934323507   wazuh/wazuh-dashboard:4.14.1   "/entrypoint.sh"         17 minutes ago   Up 17 minutes       443/tcp, 5601/tcp                           multi-node-wazuh.dashboard-1
+35772f749817   wazuh/wazuh-indexer:4.14.1     "/entrypoint.sh open…"   17 minutes ago   Up 17 minutes       9200/tcp                                    multi-node-wazuh3.indexer-1
+ab6b008aa12f   wazuh/wazuh-indexer:4.14.1     "/entrypoint.sh open…"   17 minutes ago   Up 17 minutes       9200/tcp                                    multi-node-wazuh2.indexer-1
+38c350597ca9   wazuh/wazuh-indexer:4.14.1     "/entrypoint.sh open…"   17 minutes ago   Up 17 minutes       0.0.0.0:9200->9200/tcp, :::9200->9200/tcp   multi-node-wazuh1.indexer-1
+1071f37525b4   multi-node-ubuntu-agent        "/entrypoint.sh"         21 hours ago     Up About an hour                                                multi-node-ubuntu-agent-1
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─# docker start multi-node-wazuh.worker-1
+multi-node-wazuh.worker-1
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─# docker start keepalived-2
+
+keepalived-2
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─# docker ps
+
+CONTAINER ID   IMAGE                          COMMAND                  CREATED          STATUS             PORTS                                       NAMES
+12238682be74   osixia/keepalived:2.0.20       "/container/tool/run"    18 minutes ago   Up 26 seconds                                                  keepalived-2
+1907ded61d16   nginx:stable                   "/docker-entrypoint.…"   18 minutes ago   Up 2 minutes       80/tcp                                      multi-node-nginx-lb-1-1
+1cc599cb5b23   nginx:stable                   "/docker-entrypoint.…"   18 minutes ago   Up 2 minutes       80/tcp                                      multi-node-nginx-lb-2-1
+6a0934323507   wazuh/wazuh-dashboard:4.14.1   "/entrypoint.sh"         18 minutes ago   Up 18 minutes      443/tcp, 5601/tcp                           multi-node-wazuh.dashboard-1
+35772f749817   wazuh/wazuh-indexer:4.14.1     "/entrypoint.sh open…"   18 minutes ago   Up 18 minutes      9200/tcp                                    multi-node-wazuh3.indexer-1
+cb348359a6fe   wazuh/wazuh-manager:4.14.1     "/init"                  18 minutes ago   Up 47 seconds      1514-1516/tcp, 514/udp, 55000/tcp           multi-node-wazuh.worker-1
+ab6b008aa12f   wazuh/wazuh-indexer:4.14.1     "/entrypoint.sh open…"   18 minutes ago   Up 18 minutes      9200/tcp                                    multi-node-wazuh2.indexer-1
+38c350597ca9   wazuh/wazuh-indexer:4.14.1     "/entrypoint.sh open…"   18 minutes ago   Up 18 minutes      0.0.0.0:9200->9200/tcp, :::9200->9200/tcp   multi-node-wazuh1.indexer-1
+1071f37525b4   multi-node-ubuntu-agent        "/entrypoint.sh"         21 hours ago     Up About an hour                                               multi-node-ubuntu-agent-1
+
+┌──(root㉿wazuh-master)-[/home/bear]
+└─#
+
+Agent Live Logs 
+
+┌──(root㉿wazuh-master)-[/var/ossec/logs]
+└─# tail -f /var/ossec/logs/ossec.log
+2026/01/12 12:46:47 wazuh-agentd: INFO: Closing connection to server ([172.25.0.222]:1514/tcp).
+2026/01/12 12:46:47 wazuh-agentd: INFO: Trying to connect to server ([172.25.0.222]:1514/tcp).
+2026/01/12 12:46:50 wazuh-agentd: ERROR: (1216): Unable to connect to '[172.25.0.222]:1514/tcp': 'Transport endpoint is not connected'.
+2026/01/12 12:47:00 wazuh-agentd: INFO: Trying to connect to server ([172.25.0.222]:1514/tcp).
+2026/01/12 12:47:10 wazuh-agentd: INFO: Closing connection to server ([172.25.0.222]:1514/tcp).
+2026/01/12 12:47:10 wazuh-agentd: INFO: Trying to connect to server ([172.25.0.222]:1514/tcp).
+2026/01/12 12:47:10 wazuh-agentd: INFO: (4102): Connected to the server ([172.25.0.222]:1514/tcp).
+2026/01/12 12:47:10 wazuh-agentd: INFO: Server responded. Releasing lock.
+2026/01/12 12:47:12 wazuh-logcollector: INFO: Agent is now online. Process unlocked, continuing...
+2026/01/12 12:47:12 wazuh-agentd: INFO: Agent is now online. Process unlocked, continuing...
+2026/01/12 12:56:35 wazuh-agentd: ERROR: (1137): Lost connection with manager. Setting lock.
+2026/01/12 12:56:35 wazuh-agentd: INFO: Closing connection to server ([172.25.0.222]:1514/tcp).
+2026/01/12 12:56:35 wazuh-agentd: INFO: Trying to connect to server ([172.25.0.222]:1514/tcp).
+2026/01/12 12:56:39 wazuh-logcollector: WARNING: Process locked due to agent is offline. Waiting for connection...
+2026/01/12 12:56:59 wazuh-agentd: INFO: Closing connection to server ([172.25.0.222]:1514/tcp).
+2026/01/12 12:56:59 wazuh-agentd: INFO: Trying to connect to server ([172.25.0.222]:1514/tcp).
+2026/01/12 12:57:12 wazuh-agentd: INFO: Closing connection to server ([172.25.0.222]:1514/tcp).
+2026/01/12 12:57:12 wazuh-agentd: INFO: Trying to connect to server ([172.25.0.222]:1514/tcp).
+2026/01/12 12:57:12 wazuh-agentd: INFO: (4102): Connected to the server ([172.25.0.222]:1514/tcp).
+2026/01/12 12:57:12 wazuh-agentd: INFO: Server responded. Releasing lock.
+2026/01/12 12:57:14 wazuh-logcollector: INFO: Agent is now online. Process unlocked, continuing...
+2026/01/12 12:58:00 wazuh-agentd: ERROR: (1137): Lost connection with manager. Setting lock.
+2026/01/12 12:58:00 wazuh-agentd: INFO: Closing connection to server ([172.25.0.222]:1514/tcp).
+2026/01/12 12:58:00 wazuh-agentd: INFO: Trying to connect to server ([172.25.0.222]:1514/tcp).
+2026/01/12 12:58:00 wazuh-agentd: ERROR: (1216): Unable to connect to '[172.25.0.222]:1514/tcp': 'Transport endpoint is not connected'.
+2026/01/12 12:58:01 wazuh-logcollector: WARNING: Process locked due to agent is offline. Waiting for connection...
+2026/01/12 12:58:10 wazuh-agentd: INFO: Trying to connect to server ([172.25.0.222]:1514/tcp).
+2026/01/12 12:58:10 wazuh-agentd: INFO: (4102): Connected to the server ([172.25.0.222]:1514/tcp).
+2026/01/12 12:58:10 wazuh-agentd: INFO: Server responded. Releasing lock.
+2026/01/12 12:58:11 wazuh-logcollector: INFO: Agent is now online. Process unlocked, continuing...
+2026/01/12 12:59:33 wazuh-agentd: WARNING: Server unavailable. Setting lock.
+2026/01/12 12:59:33 wazuh-agentd: INFO: Closing connection to server ([172.25.0.222]:1514/tcp).
+2026/01/12 12:59:33 wazuh-agentd: INFO: Trying to connect to server ([172.25.0.222]:1514/tcp).
+2026/01/12 12:59:35 wazuh-agentd: ERROR: (1216): Unable to connect to '[172.25.0.222]:1514/tcp': 'Transport endpoint is not connected'.
+2026/01/12 12:59:45 wazuh-agentd: INFO: Trying to connect to server ([172.25.0.222]:1514/tcp).
+2026/01/12 12:59:48 wazuh-agentd: ERROR: (1216): Unable to connect to '[172.25.0.222]:1514/tcp': 'Transport endpoint is not connected'.
+2026/01/12 12:59:58 wazuh-agentd: INFO: Trying to connect to server ([172.25.0.222]:1514/tcp).
+2026/01/12 13:00:01 wazuh-agentd: ERROR: (1216): Unable to connect to '[172.25.0.222]:1514/tcp': 'Transport endpoint is not connected'.
+2026/01/12 13:00:03 wazuh-logcollector: WARNING: Process locked due to agent is offline. Waiting for connection...
+2026/01/12 13:00:11 wazuh-agentd: INFO: Trying to connect to server ([172.25.0.222]:1514/tcp).
+2026/01/12 13:00:14 wazuh-agentd: ERROR: (1216): Unable to connect to '[172.25.0.222]:1514/tcp': 'Transport endpoint is not connected'.
+2026/01/12 13:00:24 wazuh-agentd: INFO: Trying to connect to server ([172.25.0.222]:1514/tcp).
+2026/01/12 13:00:27 wazuh-agentd: ERROR: (1216): Unable to connect to '[172.25.0.222]:1514/tcp': 'Transport endpoint is not connected'.
+2026/01/12 13:00:27 wazuh-agentd: INFO: Requesting a key from server: 172.25.0.222
+2026/01/12 13:00:30 wazuh-agentd: ERROR: (1208): Unable to connect to enrollment service at '[172.25.0.222]:1515'
+2026/01/12 13:00:40 wazuh-agentd: WARNING: (4101): Waiting for server reply (not started). Tried: '172.25.0.222'. Ensure that the manager version is 'v4.14.1' or higher.
+2026/01/12 13:00:40 wazuh-agentd: WARNING: Unable to connect to any server.
+2026/01/12 13:00:40 wazuh-agentd: INFO: Trying to connect to server ([172.25.0.222]:1514/tcp).
+2026/01/12 13:00:43 wazuh-agentd: ERROR: (1216): Unable to connect to '[172.25.0.222]:1514/tcp': 'Transport endpoint is not connected'.
+2026/01/12 13:00:53 wazuh-agentd: INFO: Trying to connect to server ([172.25.0.222]:1514/tcp).
+2026/01/12 13:00:56 wazuh-agentd: ERROR: (1216): Unable to connect to '[172.25.0.222]:1514/tcp': 'Transport endpoint is not connected'.
+2026/01/12 13:00:59 wazuh-logcollector: WARNING: Target 'agent' message queue is full (1024). Log lines may be lost.
+2026/01/12 13:01:06 wazuh-agentd: INFO: Trying to connect to server ([172.25.0.222]:1514/tcp).
+2026/01/12 13:01:09 wazuh-agentd: ERROR: (1216): Unable to connect to '[172.25.0.222]:1514/tcp': 'Transport endpoint is not connected'.
+2026/01/12 13:01:19 wazuh-agentd: INFO: Trying to connect to server ([172.25.0.222]:1514/tcp).
+2026/01/12 13:01:20 wazuh-syscheckd: WARNING: Process locked due to agent is offline. Waiting for connection...
+2026/01/12 13:01:22 wazuh-agentd: ERROR: (1216): Unable to connect to '[172.25.0.222]:1514/tcp': 'Transport endpoint is not connected'.
+2026/01/12 13:01:32 wazuh-agentd: INFO: Trying to connect to server ([172.25.0.222]:1514/tcp).
+2026/01/12 13:01:35 wazuh-agentd: ERROR: (1216): Unable to connect to '[172.25.0.222]:1514/tcp': 'Transport endpoint is not connected'.
+2026/01/12 13:01:35 wazuh-agentd: INFO: Requesting a key from server: 172.25.0.222
+2026/01/12 13:01:38 wazuh-agentd: ERROR: (1208): Unable to connect to enrollment service at '[172.25.0.222]:1515'
+2026/01/12 13:01:48 wazuh-agentd: WARNING: (4101): Waiting for server reply (not started). Tried: '172.25.0.222'. Ensure that the manager version is 'v4.14.1' or higher.
+2026/01/12 13:01:48 wazuh-agentd: WARNING: Unable to connect to any server.
+2026/01/12 13:01:48 wazuh-agentd: INFO: Trying to connect to server ([172.25.0.222]:1514/tcp).
+2026/01/12 13:01:52 wazuh-agentd: ERROR: (1216): Unable to connect to '[172.25.0.222]:1514/tcp': 'Transport endpoint is not connected'.
+2026/01/12 13:02:02 wazuh-agentd: INFO: Trying to connect to server ([172.25.0.222]:1514/tcp).
+2026/01/12 13:02:05 wazuh-agentd: ERROR: (1216): Unable to connect to '[172.25.0.222]:1514/tcp': 'Transport endpoint is not connected'.
+2026/01/12 13:02:15 wazuh-agentd: INFO: Trying to connect to server ([172.25.0.222]:1514/tcp).
+2026/01/12 13:02:18 wazuh-agentd: ERROR: (1216): Unable to connect to '[172.25.0.222]:1514/tcp': 'Transport endpoint is not connected'.
+2026/01/12 13:02:28 wazuh-agentd: INFO: Trying to connect to server ([172.25.0.222]:1514/tcp).
+2026/01/12 13:02:31 wazuh-agentd: ERROR: (1216): Unable to connect to '[172.25.0.222]:1514/tcp': 'Transport endpoint is not connected'.
+2026/01/12 13:02:41 wazuh-agentd: INFO: Trying to connect to server ([172.25.0.222]:1514/tcp).
+2026/01/12 13:02:44 wazuh-agentd: ERROR: (1216): Unable to connect to '[172.25.0.222]:1514/tcp': 'Transport endpoint is not connected'.
+2026/01/12 13:02:44 wazuh-agentd: INFO: Requesting a key from server: 172.25.0.222
+2026/01/12 13:02:47 wazuh-agentd: ERROR: (1208): Unable to connect to enrollment service at '[172.25.0.222]:1515'
+2026/01/12 13:02:57 wazuh-agentd: WARNING: (4101): Waiting for server reply (not started). Tried: '172.25.0.222'. Ensure that the manager version is 'v4.14.1' or higher.
+2026/01/12 13:02:57 wazuh-agentd: WARNING: Unable to connect to any server.
+2026/01/12 13:02:57 wazuh-agentd: INFO: Trying to connect to server ([172.25.0.222]:1514/tcp).
+2026/01/12 13:02:57 wazuh-agentd: INFO: (4102): Connected to the server ([172.25.0.222]:1514/tcp).
+2026/01/12 13:02:57 wazuh-agentd: INFO: Server responded. Releasing lock.
+2026/01/12 13:02:58 wazuh-logcollector: INFO: Agent is now online. Process unlocked, continuing...
+2026/01/12 13:03:00 wazuh-syscheckd: INFO: Agent is now online. Process unlocked, continuing...
+2026/01/12 13:03:59 wazuh-agentd: WARNING: Server unavailable. Setting lock.
+2026/01/12 13:03:59 wazuh-agentd: INFO: Closing connection to server ([172.25.0.222]:1514/tcp).
+2026/01/12 13:03:59 wazuh-agentd: INFO: Trying to connect to server ([172.25.0.222]:1514/tcp).
+2026/01/12 13:04:02 wazuh-agentd: ERROR: (1216): Unable to connect to '[172.25.0.222]:1514/tcp': 'Transport endpoint is not connected'.
+2026/01/12 13:04:03 wazuh-logcollector: WARNING: Process locked due to agent is offline. Waiting for connection...
+2026/01/12 13:04:12 wazuh-agentd: INFO: Trying to connect to server ([172.25.0.222]:1514/tcp).
+2026/01/12 13:04:13 wazuh-agentd: ERROR: (1216): Unable to connect to '[172.25.0.222]:1514/tcp': 'Transport endpoint is not connected'.
+2026/01/12 13:04:23 wazuh-agentd: INFO: Trying to connect to server ([172.25.0.222]:1514/tcp).
+2026/01/12 13:04:26 wazuh-agentd: ERROR: (1216): Unable to connect to '[172.25.0.222]:1514/tcp': 'Transport endpoint is not connected'.
+2026/01/12 13:04:36 wazuh-agentd: INFO: Trying to connect to server ([172.25.0.222]:1514/tcp).
+2026/01/12 13:04:39 wazuh-agentd: ERROR: (1216): Unable to connect to '[172.25.0.222]:1514/tcp': 'Transport endpoint is not connected'.
+2026/01/12 13:04:49 wazuh-agentd: INFO: Trying to connect to server ([172.25.0.222]:1514/tcp).
+2026/01/12 13:04:54 wazuh-agentd: INFO: (4102): Connected to the server ([172.25.0.222]:1514/tcp).
+2026/01/12 13:04:54 wazuh-agentd: INFO: Server responded. Releasing lock.
+2026/01/12 13:04:58 wazuh-logcollector: INFO: Agent is now online. Process unlocked, continuing...

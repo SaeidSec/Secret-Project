@@ -1,0 +1,98 @@
+================================================================================
+TITLE: SOC Signal - Enterprise-Grade Security Operations Center Infrastructure
+SUBTITLE: A Highly Available, Multi-Node Wazuh Deployment with Unified Monitoring
+================================================================================
+
+AUTHOR: Antigravity AI
+DATE: 2026-01-17
+VERSION: 2.1 (Detailed Workflow Update)
+
+--------------------------------------------------------------------------------
+1. INTRODUCTION
+--------------------------------------------------------------------------------
+In the modern cybersecurity landscape, a robust Security Operations Center (SOC) is no longer a luxury but a necessity. "SOC Signal" is a comprehensive infrastructure project designed to provide visibility, threat detection, and continuous monitoring across distributed environments. 
+
+This project leverages the power of Wazuh for Endpoint Detection and Response (EDR), Security Information and Event Management (SIEM), and Vulnerability Management. To ensure maximum reliability and observability, it integrates a High Availability (HA) load-balancing layer, a 3-node Indexer cluster for data persistence, and an enterprise-grade monitoring stack powered by Zabbix and Grafana.
+
+--------------------------------------------------------------------------------
+2. PROJECT GOALS (WHY?)
+--------------------------------------------------------------------------------
+The primary objective of this project is to solve three critical challenges in security infrastructure:
+1. SCALABILITY: Handling thousands of agents across different networks without performance bottlenecks.
+2. RELIABILITY: Ensuring the security stack remains operational even if individual nodes fail (High Availability).
+3. OBSERVABILITY: Providing a "single pane of glass" for both security events and infrastructure health.
+
+--------------------------------------------------------------------------------
+3. SYSTEM ARCHITECTURE (DESIGN)
+--------------------------------------------------------------------------------
+The architecture is divided into four distinct layers, ensuring separation of concerns and optimized performance.
+
+LAYER 1: EXTERNAL/CLIENT NETWORK
+- Wazuh Agents: Installed on endpoints to collect logs, monitor files, and detect anomalies.
+- Security Analysts: Access the platform via secure HTTPS web interfaces.
+
+LAYER 2: HIGH AVAILABILITY LAYER (HA)
+- Virtual IP (172.25.0.222): A floating IP managed by Keepalived.
+- Nginx Load Balancers: Redundant LB1 (Master) and LB2 (Backup) nodes ensure that agent traffic and dashboard access are always distributed and fail-safe.
+
+LAYER 3: WAZUH CORE INFRASTRUCTURE
+- Manager Cluster: A Master node for API/Enrollment and a Worker node for real-time event processing.
+- Indexer Cluster: A 3-node OpenSearch-based cluster for high-speed data indexing and searchable storage.
+- Wazuh Dashboard: The primary UI for incident response and threat hunting.
+
+LAYER 4: MONITORING & VISUALIZATION STACK
+- Zabbix Server: Monitors the health of every Docker container and host machine.
+- Grafana: Aggregates metrics from Zabbix and security events from Wazuh into beautiful, real-time dashboards.
+
+[SYSTEM ARCHITECTURE DIAGRAM - MERMAID SOURCE]
+```mermaid
+graph TD
+    subgraph "External/Client Network"
+        Agent["Wazuh Agent"]
+        User["Security Analyst / User"]
+    end
+    
+    subgraph "High Availability Layer"
+        VIP["Virtual IP (172.25.0.222)"]
+        LB1["Nginx-LB 1 (Keepalived Master)"]
+        LB2["Nginx-LB 2 (Keepalived Backup)"]
+    end
+    
+    subgraph "Wazuh Infrastructure"
+        subgraph "Managers Cluster"
+            Master["Wazuh Master Manager"]
+            Worker["Wazuh Worker Manager"]
+        end
+        
+        Dashboard["Wazuh Dashboard"]
+        
+        subgraph "Indexer Cluster"
+            Idx1["Wazuh Indexer 1"]
+            Idx2["Wazuh Indexer 2"]
+            Idx3["Wazuh Indexer 3"]
+        end
+    end
+    
+    subgraph "Monitoring & Visualization Stack"
+        subgraph "Zabbix Monitoring"
+            ZabbixDB[(PostgreSQL DB)]
+            ZabbixServer["Zabbix Server"]
+            ZabbixWeb["Zabbix Web UI"]
+        end
+        Grafana["Grafana"]
+    end
+    
+    Agent -- "Security Data" --> VIP
+    User -- "Access" --> VIP
+    VIP -- VRRP Heartbeat --> LB1 & LB2
+    LB1 & LB2 --> Master & Worker & Dashboard
+    Master -- Sync --> Worker
+    Master & Worker --> Idx1 & Idx2 & Idx3
+    ZabbixServer -.monitors.-> Master & Worker & Idx1 & Idx2 & Idx3 & Dashboard
+    Grafana --> ZabbixServer & Idx1
+```
+
+--------------------------------------------------------------------------------
+4. HOW IT WORKS (DETAILED WORKFLOW SEQUENCE)
+--------------------------------------------------------------------------------
+The security lifecycle involves complex handshakes and data transformations across multiple protocols. Below is the technical breakdown of how a detection event travels from an endpoint to the analysts
