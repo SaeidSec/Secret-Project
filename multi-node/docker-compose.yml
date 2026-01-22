@@ -690,8 +690,8 @@ services:
       - ZBX_SERVER_PORT=10051
       - ZBX_PASSIVE_ALLOW=true
       - ZBX_ACTIVE_ALLOW=true
-    depends_on:
-      - zabbix-server
+
+
 
 volumes:
   mongodb_data:

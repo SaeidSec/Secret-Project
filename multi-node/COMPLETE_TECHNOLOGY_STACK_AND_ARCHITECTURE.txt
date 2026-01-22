@@ -1,0 +1,719 @@
+================================================================================
+ENTERPRISE-GRADE WAZUH SIEM - COMPLETE TECHNOLOGY STACK & ARCHITECTURE
+================================================================================
+Project: Docker-based Enterprise-Grade Wazuh SIEM
+Version: Wazuh 4.14.1
+Architecture: Multi-Node with High Availability, Load Balancing & Advanced Monitoring
+================================================================================
+
+TABLE OF CONTENTS
+-----------------
+1. CORE WAZUH COMPONENTS
+2. HIGH AVAILABILITY & LOAD BALANCING
+3. MONITORING & METRICS STACK
+4. LOG MANAGEMENT & ANALYSIS
+5. HONEYPOT & THREAT INTELLIGENCE
+6. NETWORKING & INFRASTRUCTURE
+7. STORAGE & PERSISTENCE
+8. COMPLETE CONTAINER LIST
+9. SYSTEM ARCHITECTURE OVERVIEW
+10. DATA FLOW ARCHITECTURE
+11. TECHNOLOGY STACK SUMMARY
+12. PORT MAPPINGS
+13. INTEGRATION POINTS
+
+================================================================================
+1. CORE WAZUH COMPONENTS
+================================================================================
+
+1.1 WAZUH MANAGERS (Cluster Configuration)
+-------------------------------------------
+Container: wazuh.master
+  - Image: wazuh/wazuh-manager:4.14.1
+  - Role: Master Manager (Cluster Coordinator)
+  - Functions:
+    * API Server (Port 55000)
+    * Agent Enrollment & Management
+    * Cluster Coordination
+    * Rule Processing
+    * Active Response Orchestration
+  - Protocols: TCP 1514, 1515, 55000 | UDP 514
+  - Integration: Filebeat → Wazuh Indexers
+
+Container: wazuh.worker
+  - Image: wazuh/wazuh-manager:4.14.1
+  - Role: Worker Manager (Event Processing)
+  - Functions:
+    * Event Processing & Analysis
+    * Log Aggregation
+    * Distributed Processing
+  - Protocols: TCP 1514
+  - Integration: Filebeat → Wazuh Indexers
+
+1.2 WAZUH INDEXERS (OpenSearch Cluster)
+----------------------------------------
+Container: wazuh1.indexer
+  - Image: wazuh/wazuh-indexer:4.14.1
+  - Role: Primary Indexer Node
+  - Technology: OpenSearch (Elasticsearch fork)
+  - Port: 9200 (HTTPS)
+  - Cluster: 3-node cluster with quorum
+  - Storage: Persistent volume (wazuh-indexer-data-1)
+
+Container: wazuh2.indexer
+  - Image: wazuh/wazuh-indexer:4.14.1
+  - Role: Secondary Indexer Node
+  - Port: 9200 (HTTPS)
+  - Storage: Persistent volume (wazuh-indexer-data-2)
+
+Container: wazuh3.indexer
+  - Image: wazuh/wazuh-indexer:4.14.1
+  - Role: Tertiary Indexer Node
+  - Port: 9200 (HTTPS)
+  - Storage: Persistent volume (wazuh-indexer-data-3)
+
+1.3 WAZUH DASHBOARD
+-------------------
+Container: wazuh.dashboard
+  - Image: wazuh/wazuh-dashboard:4.14.1
+  - Role: Web UI & Visualization
+  - Technology: OpenSearch Dashboards (Kibana fork)
+  - Port: 5601 (HTTPS)
+  - Access: Via Load Balancer (VIP 172.25.0.222:443)
+  - Features:
+    * Security Event Visualization
+    * Compliance Dashboards
+    * Agent Management UI
+    * Custom Dashboards
+
+================================================================================
+2. HIGH AVAILABILITY & LOAD BALANCING
+================================================================================
+
+2.1 NGINX LOAD BALANCERS
+-------------------------
+Container: nginx-lb-1
+  - Image: nginx:stable
+  - Role: Primary Load Balancer
+  - Functions:
+    * Reverse Proxy for Wazuh Dashboard
+    * Reverse Proxy for Wazuh API
+    * SSL/TLS Termination
+    * Health Checks
+  - Configuration: nginx_ha.conf
+  - Monitoring: Telegraf agent attached
+
+Container: nginx-lb-2
+  - Image: nginx:stable
+  - Role: Backup Load Balancer
+  - Functions: Same as nginx-lb-1
+  - Failover: Automatic via Keepalived
+
+2.2 KEEPALIVED (VRRP High Availability)
+----------------------------------------
+Container: keepalived-1
+  - Image: osixia/keepalived:2.0.20
+  - Role: VRRP Master
+  - Virtual IP: 172.25.0.222
+  - Priority: 100 (Master)
+  - Network Mode: Shared with nginx-lb-1
+
+Container: keepalived-2
+  - Image: osixia/keepalived:2.0.20
+  - Role: VRRP Backup
+  - Virtual IP: 172.25.0.222
+  - Priority: 90 (Backup)
+  - Network Mode: Shared with nginx-lb-2
+
+2.3 TELEGRAF (Nginx Metrics Collection)
+----------------------------------------
+Container: telegraf-lb-1
+  - Image: telegraf:alpine
+  - Role: Metrics collector for nginx-lb-1
+  - Outputs: InfluxDB/Prometheus
+  - Network Mode: Shared with nginx-lb-1
+
+Container: telegraf-lb-2
+  - Image: telegraf:alpine
+  - Role: Metrics collector for nginx-lb-2
+  - Network Mode: Shared with nginx-lb-2
+
+================================================================================
+3. MONITORING & METRICS STACK
+================================================================================
+
+3.1 ZABBIX MONITORING PLATFORM
+-------------------------------
+Container: zabbix-postgres
+  - Image: postgres:16-alpine
+  - Role: Zabbix Database
+  - Database: PostgreSQL 16
+  - Storage: Persistent volume (zabbix-postgres-data)
+  - Credentials: zabbix/zabbix_password
+
+Container: zabbix-server
+  - Image: zabbix/zabbix-server-pgsql:alpine-7.0-latest
+  - Role: Monitoring Server
+  - Version: Zabbix 7.0
+  - Port: 10051 (Zabbix Trapper)
+  - Functions:
+    * Agent Data Collection
+    * Trigger Processing
+    * Alerting Engine
+    * SNMP Monitoring
+  - Storage: Persistent volume (zabbix-server-data)
+
+Container: zabbix-web
+  - Image: zabbix/zabbix-web-nginx-pgsql:alpine-7.0-latest
+  - Role: Web Frontend
+  - Port: 8080 (HTTP)
+  - Access: http://localhost:8080
+  - Credentials: Admin/zabbix
+  - Timezone: Asia/Dhaka
+
+3.2 ZABBIX AGENTS (Monitoring All Components)
+----------------------------------------------
+Total Agents: 13
+
+1. zabbix-agent-master
+   - Monitors: wazuh.master
+   - Network Mode: Shared with wazuh.master
+
+2. zabbix-agent-worker
+   - Monitors: wazuh.worker
+   - Network Mode: Shared with wazuh.worker
+
+3. zabbix-agent-indexer1
+   - Monitors: wazuh1.indexer
+   - Network Mode: Shared with wazuh1.indexer
+
+4. zabbix-agent-indexer2
+   - Monitors: wazuh2.indexer
+   - Network Mode: Shared with wazuh2.indexer
+
+5. zabbix-agent-indexer3
+   - Monitors: wazuh3.indexer
+   - Network Mode: Shared with wazuh3.indexer
+
+6. zabbix-agent-dashboard
+   - Monitors: wazuh.dashboard
+   - Network Mode: Shared with wazuh.dashboard
+
+7. zabbix-agent-nginx-lb-1
+   - Monitors: nginx-lb-1
+   - Network Mode: Shared with nginx-lb-1
+
+8. zabbix-agent-nginx-lb-2
+   - Monitors: nginx-lb-2
+   - Network Mode: Shared with nginx-lb-2
+
+9. zabbix-agent-grafana
+   - Monitors: grafana
+   - Network Mode: Shared with grafana
+
+10. zabbix-agent-postgres
+    - Monitors: zabbix-postgres
+    - Network Mode: Shared with zabbix-postgres
+
+11. zabbix-agent-beelzebub
+    - Monitors: beelzebub honeypot
+    - Network Mode: Shared with beelzebub
+
+12. zabbix-agent-cowrie
+    - Monitors: cowrie honeypot
+    - Network Mode: Shared with cowrie
+
+13. zabbix-agent-graylog
+    - Monitors: graylog
+    - Network Mode: Shared with graylog
+
+
+3.3 PROMETHEUS STACK
+--------------------
+Container: prometheus
+  - Image: prom/prometheus:latest
+  - Role: Metrics Collection & Time-Series Database
+  - Port: 9090
+  - Configuration: prometheus.yml
+  - Retention: 200 hours
+  - Storage: Persistent volume (prometheus-data)
+  - Targets:
+    * cAdvisor (Docker metrics)
+    * Node Exporter (Host metrics)
+
+Container: cadvisor
+  - Image: gcr.io/cadvisor/cadvisor:latest
+  - Role: Docker Container Metrics
+  - Port: 8080
+  - Functions:
+    * Container resource usage
+    * Performance metrics
+    * Real-time monitoring
+
+Container: node-exporter
+  - Image: prom/node-exporter:latest
+  - Role: Host System Metrics
+  - Port: 9100
+  - Metrics:
+    * CPU, Memory, Disk I/O
+    * Network statistics
+    * Filesystem metrics
+
+3.4 GRAFANA VISUALIZATION
+--------------------------
+Container: grafana
+  - Image: grafana/grafana:latest
+  - Role: Metrics Visualization & Dashboards
+  - Port: 3000
+  - Access: http://localhost:3000
+  - Credentials: admin/admin
+  - Plugins:
+    * grafana-opensearch-datasource
+    * alexanderzobnin-zabbix-app
+  - Data Sources:
+    * Prometheus
+    * Zabbix
+    * OpenSearch (Wazuh Indexers)
+  - Storage: Persistent volume (grafana-data)
+
+================================================================================
+4. LOG MANAGEMENT & ANALYSIS
+================================================================================
+
+4.1 GRAYLOG PLATFORM
+--------------------
+Container: mongodb
+  - Image: mongo:7.0
+  - Role: Graylog Metadata Storage
+  - Version: MongoDB 7.0
+  - Storage: Persistent volume (mongodb_data)
+  - Port: 27017
+
+Container: graylog
+  - Image: graylog/graylog:7.0
+  - Role: Enterprise Log Management
+  - Version: Graylog 7.0.3
+  - Ports:
+    * 9000 (Web UI)
+    * 12201 (GELF UDP/TCP)
+    * 1515 (Syslog UDP/TCP)
+  - Access: http://localhost:9000
+  - Credentials: admin/admin
+  - Integration: Connected to Wazuh Indexers (OpenSearch)
+  - Storage:
+    * graylog_data (Application data)
+    * graylog_journal (Message journal)
+  - Functions:
+    * Multi-source log aggregation
+    * Non-security log analysis
+    * Custom dashboards & streams
+    * Alert management
+
+
+================================================================================
+6. HONEYPOT & THREAT INTELLIGENCE
+================================================================================
+
+5.1 BEELZEBUB HONEYPOT
+----------------------
+Container: beelzebub
+  - Image: m4r10/beelzebub:latest
+  - Role: AI-Powered Honeypot
+  - Ports:
+    * 2222 (SSH Decoy)
+    * 8000 (HTTP Decoy - WordPress)
+  - Functions:
+    * SSH Honeypot with AI responses
+    * HTTP Honeypot (Fake WordPress)
+    * Attack Pattern Analysis
+    * Threat Intelligence Collection
+  - Log Integration: Shared volume with Wazuh Managers
+  - Custom Rules: beelzebub_rules.xml
+  - Storage: Persistent volume (beelzebub-logs)
+
+5.2 COWRIE HONEYPOT
+-------------------
+Container: cowrie
+  - Image: cowrie/cowrie:latest
+  - Role: SSH/Telnet Honeypot
+  - Port: 2223 (SSH - mapped from internal 2222)
+  - Functions:
+    * SSH/Telnet interaction logging
+    * Command logging
+    * Malware capture
+    * Brute-force attack detection
+  - Log Integration: Shared volume with Wazuh Managers
+  - Custom Rules: cowrie_rules.xml
+  - Configuration: cowrie.cfg
+  - Storage: Persistent volume (cowrie-logs)
+
+================================================================================
+6. NETWORKING & INFRASTRUCTURE
+================================================================================
+
+6.1 DOCKER NETWORK
+------------------
+Network Name: wazuh-net
+  - Driver: bridge
+  - Subnet: 172.25.0.0/16
+  - Virtual IP (VIP): 172.25.0.222
+  - Purpose: Isolated network for all containers
+
+6.2 SSL/TLS CERTIFICATES
+------------------------
+Certificate Authority: Self-signed Root CA
+Location: config/wazuh_indexer_ssl_certs/
+
+Certificates:
+  - root-ca.pem (Root CA)
+  - admin.pem / admin-key.pem (Admin certificates)
+  - wazuh.master.pem / wazuh.master-key.pem
+  - wazuh.worker.pem / wazuh.worker-key.pem
+  - wazuh1.indexer.pem / wazuh1.indexer-key.pem
+  - wazuh2.indexer.pem / wazuh2.indexer-key.pem
+  - wazuh3.indexer.pem / wazuh3.indexer-key.pem
+  - wazuh.dashboard.pem / wazuh.dashboard-key.pem
+
+Generation Tool: indexer-certs-creator
+
+================================================================================
+7. STORAGE & PERSISTENCE
+================================================================================
+
+7.1 DOCKER VOLUMES (32 Total)
+------------------------------
+
+WAZUH MASTER VOLUMES:
+  - master-wazuh-api-configuration
+  - master-wazuh-etc
+  - master-wazuh-logs
+  - master-wazuh-queue
+  - master-wazuh-var-multigroups
+  - master-wazuh-integrations
+  - master-wazuh-active-response
+  - master-wazuh-agentless
+  - master-wazuh-wodles
+  - master-filebeat-etc
+  - master-filebeat-var
+
+WAZUH WORKER VOLUMES:
+  - worker-wazuh-api-configuration
+  - worker-wazuh-etc
+  - worker-wazuh-logs
+  - worker-wazuh-queue
+  - worker-wazuh-var-multigroups
+  - worker-wazuh-integrations
+  - worker-wazuh-active-response
+  - worker-wazuh-agentless
+  - worker-wazuh-wodles
+  - worker-filebeat-etc
+  - worker-filebeat-var
+
+INDEXER VOLUMES:
+  - wazuh-indexer-data-1
+  - wazuh-indexer-data-2
+  - wazuh-indexer-data-3
+
+DASHBOARD VOLUMES:
+  - wazuh-dashboard-config
+  - wazuh-dashboard-custom
+
+MONITORING VOLUMES:
+  - zabbix-postgres-data
+  - zabbix-server-data
+  - grafana-data
+  - prometheus-data
+
+LOAD BALANCER VOLUMES:
+  - nginx-lb-1-logs
+  - nginx-lb-2-logs
+
+HONEYPOT VOLUMES:
+  - beelzebub-logs
+  - cowrie-logs
+
+
+LOG MANAGEMENT VOLUMES:
+  - mongodb_data
+  - graylog_data
+  - graylog_journal
+
+================================================================================
+8. COMPLETE CONTAINER LIST
+================================================================================
+
+Total Containers: 32
+
+CORE WAZUH (5):
+  1. wazuh.master
+  2. wazuh.worker
+  3. wazuh1.indexer
+  4. wazuh2.indexer
+  5. wazuh3.indexer
+  6. wazuh.dashboard
+
+HIGH AVAILABILITY (6):
+  7. nginx-lb-1
+  8. nginx-lb-2
+  9. keepalived-1
+  10. keepalived-2
+  11. telegraf-lb-1
+  12. telegraf-lb-2
+
+ZABBIX MONITORING (16):
+  13. zabbix-postgres
+  14. zabbix-server
+  15. zabbix-web
+  16. zabbix-agent-master
+  17. zabbix-agent-worker
+  18. zabbix-agent-indexer1
+  19. zabbix-agent-indexer2
+  20. zabbix-agent-indexer3
+  21. zabbix-agent-dashboard
+  22. zabbix-agent-nginx-lb-1
+  23. zabbix-agent-nginx-lb-2
+  24. zabbix-agent-grafana
+  25. zabbix-agent-postgres
+  26. zabbix-agent-beelzebub
+  27. zabbix-agent-cowrie
+  28. zabbix-agent-graylog
+
+PROMETHEUS STACK (4):
+  29. prometheus
+  30. cadvisor
+  31. node-exporter
+  32. grafana
+
+LOG MANAGEMENT (2):
+  33. mongodb
+  34. graylog
+
+
+HONEYPOTS (2):
+  38. beelzebub
+  39. cowrie
+
+================================================================================
+9. SYSTEM ARCHITECTURE OVERVIEW
+================================================================================
+
+ARCHITECTURE LAYERS:
+--------------------
+
+LAYER 1: EXTERNAL ACCESS
+  - Virtual IP: 172.25.0.222
+  - Keepalived VRRP (Active/Passive)
+  - Public Ports: 443, 8080, 3000, 9000, 2222, 2223, 8000
+
+LAYER 2: LOAD BALANCING
+  - Nginx LB-1 (Primary)
+  - Nginx LB-2 (Backup)
+  - Health Checks & SSL Termination
+
+LAYER 3: APPLICATION TIER
+  - Wazuh Dashboard (Web UI)
+  - Wazuh Master Manager (API & Coordination)
+  - Wazuh Worker Manager (Processing)
+
+LAYER 4: DATA TIER
+  - 3-Node Wazuh Indexer Cluster (OpenSearch)
+  - MongoDB (Graylog metadata)
+  - PostgreSQL (Zabbix database)
+
+LAYER 5: MONITORING & OBSERVABILITY
+  - Zabbix Server + 13 Agents
+  - Prometheus + cAdvisor + Node Exporter
+  - Grafana Dashboards
+
+LAYER 6: LOG AGGREGATION
+  - Graylog (Multi-source logs)
+  - Filebeat (Wazuh → Indexers)
+  - Telegraf (Nginx metrics)
+
+LAYER 7: THREAT INTELLIGENCE
+  - Beelzebub Honeypot (SSH/HTTP)
+  - Cowrie Honeypot (SSH/Telnet)
+  - Custom Wazuh Rules Integration
+
+================================================================================
+10. DATA FLOW ARCHITECTURE
+================================================================================
+
+10.1 SECURITY EVENT FLOW
+-------------------------
+Wazuh Agents → Load Balancer (VIP) → Wazuh Managers → Filebeat → 
+Wazuh Indexers (3-node cluster) → Wazuh Dashboard
+
+10.2 HONEYPOT DATA FLOW
+-----------------------
+Beelzebub/Cowrie → Log Files (Shared Volumes) → Wazuh Managers → 
+Custom Rules Processing → Wazuh Indexers → Alerts & Dashboards
+
+10.3 MONITORING DATA FLOW
+--------------------------
+All Containers → Zabbix Agents → Zabbix Server → PostgreSQL Database → 
+Zabbix Web UI / Grafana
+
+Docker Containers → cAdvisor → Prometheus → Grafana Dashboards
+Host System → Node Exporter → Prometheus → Grafana Dashboards
+
+
+10.5 LOG MANAGEMENT FLOW
+-------------------------
+Wazuh Managers → Graylog (Port 1515) → MongoDB (Metadata) → 
+Wazuh Indexers (OpenSearch) → Graylog Web UI
+
+10.5 HIGH AVAILABILITY FLOW
+----------------------------
+Client Request → VIP (172.25.0.222) → Keepalived VRRP → 
+Active Nginx LB → Backend Services
+
+Failover: Keepalived-1 Down → Keepalived-2 Claims VIP → 
+Nginx-LB-2 Becomes Active
+
+================================================================================
+11. TECHNOLOGY STACK SUMMARY
+================================================================================
+
+CORE TECHNOLOGIES:
+  - Wazuh SIEM: 4.14.1
+  - OpenSearch (Indexers): Based on Wazuh 4.14.1
+  - OpenSearch Dashboards: Based on Wazuh 4.14.1
+  - Docker Compose: v2
+
+LOAD BALANCING & HA:
+  - Nginx: stable
+  - Keepalived: 2.0.20
+  - VRRP Protocol
+
+MONITORING:
+  - Zabbix: 7.0 (Server, Web, Agents)
+  - Prometheus: latest
+  - Grafana: latest
+  - cAdvisor: latest
+  - Node Exporter: latest
+  - Telegraf: alpine
+
+DATABASES:
+  - PostgreSQL: 16-alpine (Zabbix)
+  - MongoDB: 7.0 (Graylog)
+  - OpenSearch: Embedded in Wazuh Indexers
+
+LOG MANAGEMENT:
+  - Graylog: 7.0
+  - Filebeat: Embedded in Wazuh Managers
+
+HONEYPOTS:
+  - Beelzebub: latest
+  - Cowrie: latest
+
+PROGRAMMING/SCRIPTING:
+  - Python: Used in tools and scripts
+  - Bash: Deployment and maintenance scripts
+  - YAML: Configuration files
+
+PROTOCOLS:
+  - HTTPS/TLS: Encrypted communications
+  - Syslog: Log forwarding
+  - GELF: Graylog Extended Log Format
+  - SNMP: Network monitoring
+  - VRRP: Virtual Router Redundancy Protocol
+
+================================================================================
+12. PORT MAPPINGS
+================================================================================
+
+EXTERNAL PORTS (Host → Container):
+  - 443:443 → Load Balancer VIP (Wazuh Dashboard)
+  - 514:514/udp → wazuh.master (Syslog)
+  - 2222:22 → beelzebub (SSH Honeypot)
+  - 2223:2222 → cowrie (SSH Honeypot)
+  - 3000:3000 → grafana (Grafana UI)
+  - 8000:80 → beelzebub (HTTP Honeypot)
+  - 8080:8080 → zabbix-web (Zabbix UI)
+  - 9000:9000 → graylog (Graylog UI)
+  - 12201:12201/udp → graylog (GELF)
+  - 12201:12201/tcp → graylog (GELF)
+  - 1515:1515/udp → graylog (Syslog)
+  - 1515:1515/tcp → graylog (Syslog)
+
+
+INTERNAL PORTS (Container Network):
+  - 1514 → Wazuh Agent Communication
+  - 1515 → Wazuh Cluster Communication
+  - 5601 → Wazuh Dashboard
+  - 9090 → Prometheus
+  - 9100 → Node Exporter
+  - 9200 → Wazuh Indexers (OpenSearch)
+  - 10051 → Zabbix Server
+  - 27017 → MongoDB
+  - 55000 → Wazuh API
+
+================================================================================
+13. INTEGRATION POINTS
+================================================================================
+
+13.1 WAZUH → INDEXERS
+  - Protocol: HTTPS
+  - Transport: Filebeat
+  - Authentication: admin/SecretPassword
+  - SSL Verification: Full
+
+13.2 WAZUH → GRAYLOG
+  - Protocol: Syslog/GELF
+  - Ports: 1515, 12201
+  - Integration: Alert forwarding
+
+13.3 GRAYLOG → INDEXERS
+  - Protocol: HTTPS
+  - Backend: OpenSearch API
+  - Authentication: admin/SecretPassword
+  - SSL: Custom truststore
+
+13.4 HONEYPOTS → WAZUH
+  - Method: Shared log volumes
+  - Processing: Custom Wazuh rules
+  - Files:
+    * beelzebub_rules.xml
+    * cowrie_rules.xml
+
+13.5 MONITORING INTEGRATIONS
+  - Zabbix Agents → Zabbix Server (Port 10051)
+  - Prometheus → Exporters (cAdvisor, Node Exporter)
+  - Grafana → Data Sources (Prometheus, Zabbix, OpenSearch)
+  - Telegraf → Prometheus (Nginx metrics)
+
+13.6 DASHBOARD ACCESS
+  - Load Balancer → Wazuh Dashboard (Port 5601)
+  - Load Balancer → Wazuh API (Port 55000)
+  - Health Checks: HTTP/HTTPS probes
+
+
+================================================================================
+END OF DOCUMENT
+================================================================================
+
+This document provides a complete inventory of all technologies, tools, 
+containers, and architectural components in the Enterprise-Grade Wazuh SIEM 
+project. Use this as a reference for creating:
+
+  - System Architecture Diagrams
+  - Data Flow Diagrams
+  - Network Topology Diagrams
+  - Deployment Diagrams
+  - Component Interaction Diagrams
+
+For visual diagram creation, consider using:
+  - Mermaid (for markdown-based diagrams)
+  - Draw.io / Lucidchart (for professional diagrams)
+  - PlantUML (for UML diagrams)
+  - Graphviz (for network graphs)
+
+================================================================================
+Document Generated: 2026-01-22
+Project Version: Wazuh 4.14.1
+Total Containers: 32
+Total Volumes: 32
+Network Subnet: 172.25.0.0/16
+Virtual IP: 172.25.0.222
+================================================================================
