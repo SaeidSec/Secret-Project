@@ -1,0 +1,102 @@
+ACHIEVING TRUE HIGH AVAILABILITY IN DOCKERIZED WAZUH: THE "PAUSE CONTAINER" PATTERN
+================================================================================
+
+Date: January 23, 2026
+Author: Antigravity (Google DeepMind)
+Project: Enterprise-Grade Wazuh SIEM
+
+--------------------------------------------------------------------------------
+
+1. INTRODUCTION
+
+In any enterprise-grade Security Information and Event Management (SIEM) deployment, High Availability (HA) is not a luxury—it is a requirement. Security operations cannot afford blind spots caused by infrastructure maintenance or component failures.
+
+Our objective was to implement a robust HA layer for the Wazuh Docker multi-node stack using Nginx as the load balancer and Keepalived for Virtual IP (VIP) management. While the initial setup provided basic redundancy, we uncovered a critical architectural limitation in the standard Docker networking model that compromised the stability of the cluster during routine maintenance operations.
+
+This report details the architectural challenges encountered, the "Pause Container" solution implemented to solve them, and the resulting benefits for system resilience.
+
+--------------------------------------------------------------------------------
+
+2. ISSUES & ARCHITECTURAL LIMITATIONS
+
+[The "Service Network Mode" Trap]
+In a Dockerized environment, simpler setups often attach sidecar containers (like Keepalived) directly to the main application container (like Nginx) using `network_mode: "service:nginx"`. This allows them to share the localhost network interface.
+
+[Key Limitation: Network Namespace Lifecycle Coupling]
+The critical flaw in this design is Lifecycle Coupling.
+
+1. Dependency: Keepalived depends entirely on Nginx's network namespace.
+2. The Event: When Nginx is restarted.
+3. The Failure: Docker DESTROYS the network namespace associated with Nginx.
+4. The Impact: Keepalived instantaneously loses its network interface (eth0). It enters a FAULT state and drops the VIP.
+5. The Aftermath: Keepalived remains broken even after Nginx returns, requiring manual restart.
+
+[Visualization: The Failure Cascade]
+
+Admin -> Restarts Nginx
+   |
+   v
+Docker stops Nginx Container
+   |
+   v
+Docker DESTROYS Network Namespace (eth0 vanishes)
+   |
+   +---> Keepalived loses interface -> FAULT STATE -> VIP DROPPED
+   |
+Docker Starts New Nginx (New Namespace created)
+   |
+   +---> Keepalived is detached/orphaned from new namespace
+   |
+RESULT: SERVICE OUTAGE until manual Keepalived restart.
+
+--------------------------------------------------------------------------------
+
+3. THE SOLUTION: DECOUPLING NETWORK LIFECYCLE
+
+To solve this, we must decouple the Network Lifecycle from the Application Lifecycle. We implemented the "Pause Container" pattern (similar to Kubernetes Pods).
+
+[Architecture Update: The "Pause Container" Pattern]
+We introduced a new, minimal infrastructure container: `lb-node` (Alpine Linux).
+
+1. Network Owner: `lb-node` creates and holds the network namespace and maps all external ports.
+2. Sidecars: `nginx` and `keepalived` attach to `lb-node` using `network_mode: service:lb-node`.
+3. Stability: `lb-node` sits idle and stable.
+4. Independence: We can restart `nginx` freely. The network namespace (owned by `lb-node`) remains alive.
+
+[State Diagram: The Resilient Flow]
+
+[ Infrastructure Layer ]
+( lb-node container ) <-----+
+      | (Host Net)          |
+      |                     |
+      v                     |
+[ Network Namespace ]       |
+(Persistent eth0/VIP)       |
+      ^                     |
+      | Shared              | Shared
+      |                     |
+[ Nginx Service ]     [ Keepalived Service ]
+(Transient/Restartable) (Stable Infrastructure)
+
+--> When Nginx restarts, lb-node stays up, so Network Namespace stays up.
+--> Keepalived never loses connection.
+
+--------------------------------------------------------------------------------
+
+4. RESULTS & BENEFITS
+
+[Verified Results]
+1. Seamless Failover: Stopping Nginx triggers graceful VIP handover.
+2. Automatic Recovery: Restarting Nginx triggers automatic VIP reclamation.
+3. Zero Network Disruption: The underlying network interface persists.
+
+[Key Benefits]
+- Operational Resilience: Maintenance doesn't break HA.
+- Automated Self-Healing: No manual scripts needed.
+- Kubernetes-Ready Design: Aligns with modern orchestration patterns.
+- Production Stability: Fit for enterprise SLAs.
+
+--------------------------------------------------------------------------------
+
+CONCLUSION
+By treating the network as a persistent infrastructure layer separate from the transient application layer, we have transformed a fragile HA setup into a resilient, self-healing system capable of sustaining the demands of a modern SOC.

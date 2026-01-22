@@ -202,48 +202,100 @@ services:
     networks:
       - wazuh-net
 
-  nginx-lb-1:
-    image: nginx:stable
+  # ============================================================================
+  # HA NODE 1 (Pod-like Architecture)
+  # ============================================================================
+  
+  # Network Holder / Pause Container for Node 1
+  lb-node-1:
+    image: alpine:latest
     hostname: nginx-lb-1
     restart: always
+    command: tail -f /dev/null
+    ports:
+      - "443:443"
+      # - "1514:1514" # Port conflicts if on same host, assuming distinct IPs or testing env
+      # In single-host docker-compose, we can only bind ports once.
+      # Since we want to expose LB1 as the primary entry point via localhost or VIP mapping
+      # We map ports here.
+      - "1514:1514"
+      - "55000:55000"
+      - "9200:9200"
+      - "3000:3000"
+      - "8080:8080"
+      - "9090:9090"
+      - "10051:10051"
+    networks:
+      - wazuh-net
+
+  nginx-lb-1:
+    image: nginx:stable
+    restart: always
+    network_mode: "service:lb-node-1"
     depends_on:
+      - lb-node-1
       - wazuh.master
       - wazuh.worker
       - wazuh.dashboard
+      - wazuh1.indexer
+      - wazuh2.indexer
+      - wazuh3.indexer
+      - grafana
+      - zabbix-web
+      - prometheus
+      - zabbix-server
     volumes:
       - ./config/nginx/nginx_ha.conf:/etc/nginx/nginx.conf:ro
       - nginx-lb-1-logs:/var/log/nginx
-    networks:
-      - wazuh-net
 
   telegraf-lb-1:
     image: telegraf:alpine
     restart: always
-    network_mode: "service:nginx-lb-1"
+    network_mode: "service:lb-node-1"
     depends_on:
       - nginx-lb-1
     volumes:
       - ./config/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
       - nginx-lb-1-logs:/var/log/nginx:ro
 
-  nginx-lb-2:
-    image: nginx:stable
+  # ============================================================================
+  # HA NODE 2 (Pod-like Architecture)
+  # ============================================================================
+
+  # Network Holder / Pause Container for Node 2
+  lb-node-2:
+    image: alpine:latest
     hostname: nginx-lb-2
     restart: always
+    command: tail -f /dev/null
+    # No ports mapped for backup node on single host to avoid conflicts
+    networks:
+      - wazuh-net
+
+  nginx-lb-2:
+    image: nginx:stable
+    restart: always
+    network_mode: "service:lb-node-2"
     depends_on:
+      - lb-node-2
       - wazuh.master
       - wazuh.worker
       - wazuh.dashboard
+      - wazuh1.indexer
+      - wazuh2.indexer
+      - wazuh3.indexer
+      - grafana
+      - zabbix-web
+      - prometheus
+      - zabbix-server
     volumes:
       - ./config/nginx/nginx_ha.conf:/etc/nginx/nginx.conf:ro
       - nginx-lb-2-logs:/var/log/nginx
-    networks:
-      - wazuh-net
 
   telegraf-lb-2:
     image: telegraf:alpine
     restart: always
-    network_mode: "service:nginx-lb-2"
+    network_mode: "service:lb-node-2"
     depends_on:
       - nginx-lb-2
     volumes:
@@ -254,7 +306,7 @@ services:
     image: osixia/keepalived:2.0.20
     container_name: keepalived-1
     restart: always
-    network_mode: "service:nginx-lb-1"
+    network_mode: "service:lb-node-1"
     cap_add:
       - NET_ADMIN
       - NET_BROADCAST
@@ -266,7 +318,7 @@ services:
     image: osixia/keepalived:2.0.20
     container_name: keepalived-2
     restart: always
-    network_mode: "service:nginx-lb-2"
+    network_mode: "service:lb-node-2"
     cap_add:
       - NET_ADMIN
       - NET_BROADCAST
@@ -435,7 +487,7 @@ services:
     image: zabbix/zabbix-agent2:alpine-7.0-latest
     restart: always
     privileged: true
-    network_mode: "service:nginx-lb-1"
+    network_mode: "service:lb-node-1"
     environment:
       - ZBX_HOSTNAME=nginx-lb-1
       - ZBX_SERVER_HOST=zabbix-server
@@ -450,7 +502,7 @@ services:
     image: zabbix/zabbix-agent2:alpine-7.0-latest
     restart: always
     privileged: true
-    network_mode: "service:nginx-lb-2"
+    network_mode: "service:lb-node-2"
     environment:
       - ZBX_HOSTNAME=nginx-lb-2
       - ZBX_SERVER_HOST=zabbix-server
