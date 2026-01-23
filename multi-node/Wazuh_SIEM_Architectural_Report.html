@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Invisible Foundation - Wazuh HA Architecture</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+    </script>
+    <style>
+        :root {
+            --primary-color: #0078d4;
+            --text-color: #2c3e50;
+            --bg-color: #ffffff;
+            --code-bg: #f5f6fa;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            background: #f0f0f0;
+        }
+
+        .page {
+            background: white;
+            width: 210mm;
+            min-height: 297mm;
+            padding: 20mm;
+            margin: 10mm auto;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        @media print {
+            body {
+                background: none;
+                margin: 0;
+            }
+            .page {
+                margin: 0;
+                box-shadow: none;
+                width: initial;
+                min-height: initial;
+                page-break-after: always;
+            }
+        }
+
+        /* Prevent cutting inside elements */
+        h1, h2, h3, p, li {
+            page-break-inside: avoid;
+        }
+        
+        .diagram-container {
+            page-break-inside: avoid;
+            margin: 2em 0;
+            background: var(--code-bg);
+            padding: 1em;
+            border-radius: 4px;
+        }
+
+        .banner {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 16/9;
+            object-fit: cover;
+            margin-bottom: 2em;
+            border-radius: 4px;
+            page-break-inside: avoid;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 0.5em;
+            margin-top: 0;
+        }
+
+        h2 {
+            color: #1a1a1a;
+            margin-top: 1.5em;
+            border-left: 5px solid var(--primary-color);
+            padding-left: 10px;
+        }
+
+        .meta {
+            color: #666;
+            font-style: italic;
+            margin-bottom: 2em;
+        }
+
+        blockquote {
+            background: #eef9ff;
+            border-left: 5px solid #0078d4;
+            margin: 1.5em 0;
+            padding: 1em;
+            font-style: italic;
+            page-break-inside: avoid;
+        }
+
+        code {
+            background: var(--code-bg);
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+        }
+
+        /* Explicit Page Breaks */
+        .sceny-break {
+            margin-top: 2em;
+            margin-bottom: 2em;
+            border-top: 1px solid #ccc;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Page 1: Title, Executive Summary, Challenge -->
+    <div class="page">
+        <img src="./HA_Architecture_Banner.png" alt="Banner" class="banner">
+        
+        <h1>The "Invisible Foundation": Engineering True High Availability in Wazuh</h1>
+        
+        <div class="meta">
+            <strong>Date:</strong> January 23, 2026<br>
+            <strong>Author:</strong> Antigravity (Google DeepMind)<br>
+            <strong>Project:</strong> Enterprise-Grade Wazuh SIEM
+        </div>
+
+        <h2>1. Executive Summary</h2>
+        <p>In mission-critical security environments, "uptime" is not just a metric—it is the shield that protects an organization. This report outlines a significant architectural evolution in our Wazuh Security Information and Event Management (SIEM) deployment.</p>
+        
+        <p><strong>The Challenge:</strong> Our initial High Availability (HA) load balancing layer suffered from a "fragile lifecycle" problem, where routine maintenance on the load balancer (Nginx) would inadvertently crash the redundancy monitor (Keepalived), causing momentary blind spots.</p>
+        
+        <p><strong>The Solution:</strong> We implemented the <strong>"Pause Container" Pattern</strong>, a sophisticated architectural strategy inspired by Kubernetes Pods. This decoupled our network stability from our application activity, resulting in a self-healing system that maintains 100% network persistence even during active maintenance.</p>
+
+        <h2>2. The Architectural Challenge: The "Vanishing Office" Problem</h2>
+        <p>To understand the technical limitation we faced, imagine a <strong>Conference Room</strong> (The Network Namespace) where two people are working:</p>
+        <ul>
+            <li><strong>The Speaker (Nginx):</strong> Handles all incoming questions (Traffic).</li>
+            <li><strong>The Assistant (Keepalived):</strong> Ensures the Speaker is present. If the Speaker faints, the Assistant calls for backup (Failover).</li>
+        </ul>
+
+        <h3>The Flaw in the Old Design</h3>
+        <p>In our previous Docker design, the Conference Room was essentially <em>owned</em> by the Speaker. This created a critical dependency:</p>
+
+        <blockquote>
+            <strong>"If the Speaker needs to leave for a glass of water (Restart), the entire Conference Room disappears."</strong>
+        </blockquote>
+
+        <p>When we restarted Nginx, Docker would destroy the network namespace. Suddenly, the Assistant (Keepalived) was left floating in a void, with no room and no phone line. It would panic (Fault State) and drop the connection. Even when the Speaker returned to a <em>new</em> room, the Assistant was often left behind in the void.</p>
+        
+        <p><strong>Technical Translation:</strong> Keepalived was attached to Nginx's network stack (<code>network_mode: service:nginx</code>). Restarting Nginx destroyed <code>eth0</code>. Keepalived lost its link to the Virtual IP (VIP), breaking High Availability.</p>
+    </div>
+
+    <!-- Page 2: Solution, Diagram, Implementation -->
+    <div class="page">
+        <h2>3. The Solution: Building a Permanent Foundation</h2>
+        <p>We needed a Conference Room that exists independently of the people inside it. Enter the <strong>"Pause Container"</strong>.</p>
+
+        <h3>The New Architecture</h3>
+        <p>We introduced a silent, invisible entity whose only job is to <strong>hold the door open</strong>. We call this the <code>lb-node</code>.</p>
+        <ol>
+            <li><strong>The Foundation:</strong> We launch <code>lb-node</code> first. It creates the Conference Room (Network Namespace) and secures the phone lines (Ports 443, 1514, etc.). It does nothing else. It just <em>exists</em>.</li>
+            <li><strong>The Occupants:</strong> We send in the Speaker (Nginx) and the Assistant (Keepalived) as guests.</li>
+            <li><strong>The Result:</strong> Now, if the Speaker needs to restart, they leave the room and come back. The Room stays perfectly still. The Phone lines stay connected. The Assistant watches the Speaker leave and waits for them to return, without ever losing their own footing.</li>
+        </ol>
+
+        <div class="diagram-container">
+            <h4>State Diagram: The Resilient Flow</h4>
+            <div class="mermaid">
+stateDiagram-v2
+    state "The Permanent Foundation" as Foundation {
+        state "Pause Container (lb-node)" as Pause
+        state "Network Namespace (The Room)" as Room
+        
+        Pause --> Room : Keeps Open
+    }
+
+    state "The Occupants (Transients)" as Guests {
+        state "Load Balancer (Nginx)" as Nginx
+        state "Monitor (Keepalived)" as Monitor
+    }
+
+    Room --> Nginx : Hosts
+    Room --> Monitor : Hosts
+
+    state "Scenario: Maintenance" as Event {
+        Nginx --> Restarting : Leaves Room
+        Restarting --> Nginx : Returns to Room
+    }
+
+    note right of Foundation
+        This layer NEVER moves.
+        It provides stability.
+    end note
+
+    note left of Monitor
+        Because the Room stays,
+        I never lose my connection.
+    end note
+            </div>
+        </div>
+
+        <h2>4. Technical Implementation & Impact</h2>
+        <p>We refactored our <code>docker-compose.yml</code> to utilize this "Pod-like" structure:</p>
+        <ul>
+            <li><strong>Infrastructure:</strong> Created <code>lb-node-1</code> and <code>lb-node-2</code> (using lightweight Alpine Linux).</li>
+            <li><strong>Networking:</strong> Configured Nginx and Keepalived to use <code>network_mode: "service:lb-node-1"</code>.</li>
+            <li><strong>Decoupling:</strong> Moved all port mappings (443, 80, 1514) from Nginx to the <code>lb-node</code>.</li>
+        </ul>
+    </div>
+
+    <!-- Page 3: Benefits, Conclusion -->
+    <div class="page">
+        <h3>The "Real World" Benefit</h3>
+        <ul>
+            <li><strong>Bulletproof Maintenance:</strong> A system administrator can now update Nginx configurations, rotate SSL certificates, or patch the web server without fearing a cluster crash. The VIP remains stable.</li>
+            <li><strong>Self-Healing:</strong> Ideally systems shouldn't fail, but if Nginx <em>does</em> crash, Keepalived now retains the ability to "phone home" and transfer duties to the backup node instantly.</li>
+            <li><strong>Future-Proofing:</strong> This design mimics how Kubernetes works (where a "Pause" container holds the Pod's IP). By adopting this now, we align our Docker infrastructure with global best practices.</li>
+        </ul>
+
+        <h2>5. Conclusion</h2>
+        <p>By shifting our perspective—moving from "Container-centric" networking to "Infrastructure-centric" networking—we have transformed a fragile dependency into a robust foundation.</p>
+        
+        <p>The Wazuh SIEM is now protected not just by redundancy, but by <strong>resilience</strong>. The lights stay on, the data flows, and the security watch never blinks.</p>
+    </div>
+
+</body>
+</html>
