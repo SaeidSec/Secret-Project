@@ -292,11 +292,40 @@ To eliminate the fragility of hardcoded IPs, we implemented an abstraction layer
     *   If Nginx responds, weight remains +0.
     *   If Nginx fails, priority is decremented by 20 (Result: 81), prompting the Backup node (Priority 100) to preemptively take over the VIP.
 
+# 6. Infrastructure Hardening & Configuration Audit
+This section details the critical gap analysis performed on the initial architecture and the subsequent engineering phases implemented to reach enterprise-grade stability.
+
+## 6.1 Phase 1: Security Audit & Vulnerability Identification
+Before finalizing the production stack, a comprehensive audit identified four primary architectural risks that could compromise SOC availability and maintainability.
+
+1.  **Configuration Fragility (Hardcoded IPs)**:
+    *   **Verdict**: Partially True. While Nginx utilized hostnames in upstream blocks, the `docker-compose.yml` relied on hardcoded VIP (`172.25.0.222`) for critical environment variables like `INDEXER_URL`. This created a maintenance bottleneck where subnet changes would require global manual updates.
+2.  **DNS Resolution Stagnation**:
+    *   **Verdict**: True (Potential). Upstream blocks in open-source Nginx resolve hostnames only once at startup. If a backend container (like Grafana) is recreated with a new internal IP, Nginx would continue pointing to the stale address until a manual reload occurs.
+3.  **Protocol Transparency Gaps (Missing Headers)**:
+    *   **Verdict**: True. The absence of `X-Forwarded-Proto` and WebSocket Upgrade headers threatened the reliability of real-time monitoring streams and HTTPS redirection logic within Grafana and Zabbix.
+4.  **Health Monitoring & Timeout Blindness**:
+    *   **Verdict**: True. Default Nginx timeouts (60s) and passive checks were insufficiently granular. Without explicit `max_fails` and `proxy_read_timeout`, a heavy indexer query could cause UI hangs or accidental backend blacklisting.
+
+## 6.2 Phase 2: Implementation & Remediation (Hardening Solutions)
+To mitigate the identified risks, the architecture was refactored with the following solutions:
+
+### Solution 1: Proactive Nginx Hardening
+The `nginx_ha.conf` was refactored with explicit traffic control directives:
+*   **Timeout Governance**: Added global `proxy_connect_timeout`, `proxy_read_timeout`, and `proxy_send_timeout` (60s) to standardize connection lifecycles.
+*   **Intelligent Health Checks**: Configured upstreams with `max_fails=3` and `fail_timeout=30s`, allowing the Load Balancer to intelligently bypass failing nodes without site-wide downtime.
+*   **Protocol Hardening**: Injected `X-Forwarded-Proto $scheme` for HTTPS integrity and full WebSocket support (`Upgrade` / `Connection` headers) for 24/7 live dashboard reliability.
+
+### Solution 2: Environment Abstraction Layer
+The `docker-compose.yml` was optimized to eliminate hardcoded dependencies:
+*   **VIP Aliasing**: Replaced the hardcoded `172.25.0.222` with a logical internal alias, **`wazuh.vip`**.
+*   **Host-Level Decoupling**: Utilized `extra_hosts` to map `wazuh.vip` to the actual VIP at the container level. Infrastructure network changes now require zero modifications to critical service environment variables.
+
 ---
 
-## 6. Full-Stack Observability Ecosystem
+# 7. Full-Stack Observability Ecosystem
 
-### 6.1 Zabbix Architecture (Active Monitoring)
+## 7.1 Zabbix Architecture (Active Monitoring)
 The Zabbix implementation here is massive.
 *   **Zabbix Server**: The brain, processing metrics from 13 active agents.
 *   **Agents**: Deployed in `privileged: true` mode alongside key components.
@@ -306,14 +335,14 @@ The Zabbix implementation here is massive.
     *   **Database Connectivity**: Checks if PostgreSQL and MongoDB are accepting connections.
     *   **Process State**: "Is `wazuh-remoted` running?"
 
-### 6.2 Prometheus & Telegraf (Performance Metrics)
+## 7.2 Prometheus & Telegraf (Performance Metrics)
 *   **Telegraf Sidecar**: Runs attached to the `lb-node`. It reads Nginx's `stub_status` module to report:
     *   Active connections.
     *   Requests per second.
     *   Handing/Writing states.
 *   **Prometheus**: Scrapes Telegraf and cAdvisor. It maintains a 200-hour retention history (`--storage.tsdb.retention.time=200h`), allowing for trend analysis (e.g., "Are we receiving more logs on Mondays?").
 
-### 6.3 Grafana (Unified Visualization)
+## 7.3 Grafana (Unified Visualization)
 Grafana sits on top of this, connected to:
 1.  **OpenSearch**: For visualizing security alerts (Wazuh data).
 2.  **Zabbix**: For visualizing infrastructure up/down states.
@@ -321,14 +350,14 @@ Grafana sits on top of this, connected to:
 
 ---
 
-## 7. Advanced Log Management & Routing Strategies
+# 8. Advanced Log Management & Routing Strategies
 
-### 7.1 Graylog 7.0 Deployment
+## 8.1 Graylog 7.0 Deployment
 While Wazuh is excellent for security, it is expensive to index *everything* into it. Graylog provides a tiered log management strategy.
 *   **Integration**: Wazuh Managers are configured to forward alerts via Syslog (JSON format) to Graylog on port `1515`.
 *   **Use Case**: Graylog serves as a "Data Lake" for long-term retention or for routing logs to other systems (e.g., archival storage) without burdening the high-performance Wazuh Indexers.
 
-### 7.2 Filebeat Integration
+## 8.2 Filebeat Integration
 Inside the Wazuh Managers, Filebeat is the transport mechanism.
 *   **Config**: It reads `/var/ossec/logs/alerts/alerts.json`.
 *   **Output**: Compressed HTTPS stream to the Indexer Cluster (`https://wazuh{1,2,3}.indexer:9200`).
@@ -336,29 +365,29 @@ Inside the Wazuh Managers, Filebeat is the transport mechanism.
 
 ---
 
-## 8. Offensive Defense: The Honeypot Ecosystem
+# 9. Offensive Defense: The Honeypot Ecosystem
 
 This architecture turns the table on attackers by deploying decoys.
 
-### 8.1 Beelzebub (AI Honeypot)
+## 9.1 Beelzebub (AI Honeypot)
 *   **Technology**: Go-based, AI-driven low-medium interaction.
 *   **Simulation**: Exposes a fake SSH service on port `2222` and a fake WordPress site on `8000`.
 *   **AI Logic**: Uses a GPT-like model to generate realistic command responses, tricking automated bots into thinking they have successfully breached a system, keeping them engaged while logging their TTPs (Tactics, Techniques, and Procedures).
 *   **Log Flow**: JSON logs are written to a shared volume mapped to the Wazuh Manager. Wazuh uses a `<localfile>` block to tail these logs and generate specific alerts ("Honeypot Triggered: SSH Brute Force").
 
-### 8.2 Cowrie (Interaction Trap)
+## 9.2 Cowrie (Interaction Trap)
 *   **Technology**: Python-based high-interaction SSH/Telnet proxy.
 *   **Function**: It mimics a UNIX filesystem. Attackers can `wget` malware, `cd` into directories, and run commands.
 *   **Forensics**: Cowrie captures the actual binaries downloaded by attackers. These are stored in `cowrie-var` for malware analysis by the SOC team.
 
 ---
 
-## 9. Automated Vulnerability Management Strategy
+# 10. Automated Vulnerability Management Strategy
 
-### 9.1 Trivy Integration Model
+## 10.1 Trivy Integration Model
 Instead of relying solely on Wazuh's "Vulnerability Detector" (which checks installed packages against CVE databases), we integrate **Trivy** for active container scanning.
 
-### 9.2 The Scanner Script (`trivy_scan.sh`)
+## 10.2 The Scanner Script (`trivy_scan.sh`)
 This custom script is the bridge between Trivy and Wazuh.
 1.  **Execution**: Runs every 3 days via Wazuh's Command Module.
 2.  **Access**: Mounts `/var/run/docker.sock` (Read-only) to see all containers on the host.
@@ -372,15 +401,15 @@ This custom script is the bridge between Trivy and Wazuh.
 
 ---
 
-## 10. Operational Manual: Deployment & Maintenance
+# 11. Operational Manual: Deployment & Maintenance
 
-### 10.1 Pre-Flight Check
+## 11.1 Pre-Flight Check
 Before deployment, the host must be prepared:
 1.  **Kernel Tuning**: `vm.max_map_count` must be set to `262144` (required for OpenSearch mmapfs).
 2.  **Resources**: Ensure at least 16GB RAM is available.
 3.  **Ports**: Ensure ports 443, 1514, 1515, 55000, 80, 2222, 2223 are free.
 
-### 10.2 Deployment Sequence (Critical Order)
+## 11.2 Deployment Sequence (Critical Order)
 1.  **Certificates**: Run `docker-compose -f generate-indexer-certs.yml run --rm generator` to create the SSL chain of trust.
 2.  **Network**: `docker network create wazuh-net`.
 3.  **Storage**: `docker-compose up -d wazuh1.indexer wazuh2.indexer wazuh3.indexer`. *Wait for green health.*
@@ -388,27 +417,27 @@ Before deployment, the host must be prepared:
 5.  **Infrastructure**: `docker-compose up -d lb-node-1 lb-node-2 nginx-lb-1 nginx-lb-2 keepalived-1 keepalived-2`.
 6.  **Observability**: `docker-compose up -d zabbix-postgres zabbix-server grafana prometheus`.
 
-### 10.3 Scaling the Cluster
+## 11.3 Scaling the Cluster
 *   **Adding Indexers**: Simply duplicate the `wazuh3.indexer` service definition, update the certificate generation `instances.yml`, and add the new node to `nginx_ha.conf`.
 *   **Adding Workers**: Duplicate `wazuh.worker`, ensuring it shares the same `INDEXER_URL` and `cluster.key`.
 
 ---
 
-## 11. Strategic Advantages & Future Roadmap
+# 12. Strategic Advantages & Future Roadmap
 
-### 11.1 Strategic Advantages
+## 12.1 Strategic Advantages
 *   **Resilience**: The architecture can suffer the loss of any single node (Indexer, Manager, LB, HA) and continue processing security events.
 *   **Cost Efficiency**: By using Open Source components (Wazuh, Zabbix, Graylog) instead of commercial alternatives (Splunk, Datadog), licensing costs are zero.
 *   **Compliance Ready**: The archival capabilities of Graylog + the integrity monitoring (FIM) of Wazuh meet strict PCI-DSS and HIPAA log retention requirements.
 
-### 11.2 Future Roadmap
+## 12.2 Future Roadmap
 *   **Kubernetes Migration**: The "Pod-like" structure of the Docker Compose file is deliberately designed to make migration to Helm charts seamless.
 *   **SOAR Automation**: Future integration with **Shuffle** or **n8n** to automatically block IPs on the firewall when a honeypot is triggered.
 *   **AI Analysis**: Implementing local LLMs (like Ollama) to parse unstructured logs and provide natural language summaries of incidents.
 
 ---
 
-## 12. Conclusion
+# 13. Conclusion
 
 The **Enterprise-Grade Wazuh SIEM** architecture described herein is a testament to modern security engineering. It rejects the fragility of simple deployments in favor of a robust, layered, and observable fortress.
 

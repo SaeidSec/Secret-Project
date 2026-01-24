@@ -347,11 +347,49 @@ This instructs Docker to \textbf{not} create a new network stack for them, but i
 \item   If Nginx fails, priority is decremented by 20 (Result: 81), prompting the Backup node (Priority 100) to preemptively take over the VIP.
 \end{itemize}
 
+\section{Infrastructure Hardening \& Configuration Audit}
+This section details the critical gap analysis performed on the initial architecture and the subsequent engineering phases implemented to reach enterprise-grade stability.
+
+\subsection{6.1 Phase 1: Security Audit \& Vulnerability Identification}
+Before finalizing the production stack, a comprehensive audit identified four primary architectural risks that could compromise SOC availability and maintainability.
+
+\begin{enumerate}
+    \item \textbf{Configuration Fragility (Hardcoded IPs)}: 
+    \textit{Verdict: Partially True}. While Nginx utilized hostnames in upstream blocks, the \texttt{docker-compose.yml} relied on hardcoded VIP (\texttt{172.25.0.222}) for critical environment variables like \texttt{INDEXER\_URL}. This created a maintenance bottleneck where subnet changes would require global manual updates.
+    
+    \item \textbf{DNS Resolution Stagnation}: 
+    \textit{Verdict: True (Potential)}. Upstream blocks in open-source Nginx resolve hostnames only once at startup. If a backend container (like Grafana) is recreated with a new internal IP, Nginx would continue pointing to the stale address until a manual reload occurs.
+    
+    \item \textbf{Protocol Transparency Gaps (Missing Headers)}: 
+    \textit{Verdict: True}. The absence of \texttt{X-Forwarded-Proto} and WebSocket Upgrade headers threatened the reliability of real-time monitoring streams and HTTPS redirection logic within Grafana and Zabbix.
+    
+    \item \textbf{Health Monitoring \& Timeout Blindness}: 
+    \textit{Verdict: True}. Default Nginx timeouts (60s) and passive checks were insufficiently granular. Without explicit \texttt{max\_fails} and \texttt{proxy\_read\_timeout}, a heavy indexer query could cause UI hangs or accidental backend blacklisting.
+\end{enumerate}
+
+\subsection{6.2 Phase 2: Implementation \& Remediation (Hardening Solutions)}
+To mitigate the identified risks, the architecture was refactored with the following solutions:
+
+\subsubsection{Solution 1: Proactive Nginx Hardening}
+The \texttt{nginx\_ha.conf} was refactored with explicit traffic control directives:
+\begin{itemize}
+    \item \textbf{Timeout Governance}: Added global \texttt{proxy\_connect\_timeout}, \texttt{proxy\_read\_timeout}, and \texttt{proxy\_send\_timeout} (60s) to standardize connection lifecycles.
+    \item \textbf{Intelligent Health Checks}: Configured upstreams with \texttt{max\_fails=3} and \texttt{fail\_timeout=30s}, allowing the Load Balancer to intelligently bypass failing nodes without site-wide downtime.
+    \item \textbf{Protocol Hardening}: Injected \texttt{X-Forwarded-Proto \$scheme} for HTTPS integrity and full WebSocket support (\texttt{Upgrade} / \texttt{Connection} headers) for 24/7 live dashboard reliability.
+\end{itemize}
+
+\subsubsection{Solution 2: Environment Abstraction Layer}
+The \texttt{docker-compose.yml} was optimized to eliminate hardcoded dependencies:
+\begin{itemize}
+    \item \textbf{VIP Aliasing}: Replaced the hardcoded \texttt{172.25.0.222} with a logical internal alias, \textbf{\texttt{wazuh.vip}}.
+    \item \textbf{Host-Level Decoupling}: Utilized \texttt{extra\_hosts} to map \texttt{wazuh.vip} to the actual VIP at the container level. Infrastructure network changes now require zero modifications to critical service environment variables.
+\end{itemize}
+
 --- \\
 
-\subsection{6. Full-Stack Observability Ecosystem}
+\section{Full-Stack Observability Ecosystem}
 
-\subsubsection{6.1 Zabbix Architecture (Active Monitoring)}
+\subsection{7.1 Zabbix Architecture (Active Monitoring)}
 The Zabbix implementation here is massive. \\
 \begin{itemize}
 \item   \textbf{Zabbix Server}: The brain, processing metrics from 13 active agents.
@@ -363,7 +401,7 @@ The Zabbix implementation here is massive. \\
 \item   \textbf{Process State}: "Is \texttt{wazuh-remoted} running?"
 \end{itemize}
 
-\subsubsection{6.2 Prometheus \& Telegraf (Performance Metrics)}
+\subsection{7.2 Prometheus \& Telegraf (Performance Metrics)}
 \begin{itemize}
 \item   \textbf{Telegraf Sidecar}: Runs attached to the \texttt{lb-node}. It reads Nginx's \texttt{stub\_{}status} module to report:
 \item   Active connections.
@@ -372,7 +410,7 @@ The Zabbix implementation here is massive. \\
 \item   \textbf{Prometheus}: Scrapes Telegraf and cAdvisor. It maintains a 200-hour retention history (\texttt{--storage.tsdb.retention.time=200h}), allowing for trend analysis (e.g., "Are we receiving more logs on Mondays?").
 \end{itemize}
 
-\subsubsection{6.3 Grafana (Unified Visualization)}
+\subsection{7.3 Grafana (Unified Visualization)}
 Grafana sits on top of this, connected to: \\
 \begin{enumerate}
 \item \textbf{OpenSearch}: For visualizing security alerts (Wazuh data).
@@ -382,16 +420,16 @@ Grafana sits on top of this, connected to: \\
 
 --- \\
 
-\subsection{7. Advanced Log Management \& Routing Strategies}
+\section{8. Advanced Log Management \& Routing Strategies}
 
-\subsubsection{7.1 Graylog 7.0 Deployment}
+\subsection{8.1 Graylog 7.0 Deployment}
 While Wazuh is excellent for security, it is expensive to index \textit{everything} into it. Graylog provides a tiered log management strategy. \\
 \begin{itemize}
 \item   \textbf{Integration}: Wazuh Managers are configured to forward alerts via Syslog (JSON format) to Graylog on port \texttt{1515}.
 \item   \textbf{Use Case}: Graylog serves as a "Data Lake" for long-term retention or for routing logs to other systems (e.g., archival storage) without burdening the high-performance Wazuh Indexers.
 \end{itemize}
 
-\subsubsection{7.2 Filebeat Integration}
+\subsection{8.2 Filebeat Integration}
 Inside the Wazuh Managers, Filebeat is the transport mechanism. \\
 \begin{itemize}
 \item   \textbf{Config}: It reads \texttt{/var/ossec/logs/alerts/alerts.json}.
@@ -401,11 +439,11 @@ Inside the Wazuh Managers, Filebeat is the transport mechanism. \\
 
 --- \\
 
-\subsection{8. Offensive Defense: The Honeypot Ecosystem}
+\section{9. Offensive Defense: The Honeypot Ecosystem}
 
 This architecture turns the table on attackers by deploying decoys. \\
 
-\subsubsection{8.1 Beelzebub (AI Honeypot)}
+\subsection{9.1 Beelzebub (AI Honeypot)}
 \begin{itemize}
 \item   \textbf{Technology}: Go-based, AI-driven low-medium interaction.
 \item   \textbf{Simulation}: Exposes a fake SSH service on port \texttt{2222} and a fake WordPress site on \texttt{8000}.
@@ -413,7 +451,7 @@ This architecture turns the table on attackers by deploying decoys. \\
 \item   \textbf{Log Flow}: JSON logs are written to a shared volume mapped to the Wazuh Manager. Wazuh uses a \texttt{<localfile>} block to tail these logs and generate specific alerts ("Honeypot Triggered: SSH Brute Force").
 \end{itemize}
 
-\subsubsection{8.2 Cowrie (Interaction Trap)}
+\subsection{9.2 Cowrie (Interaction Trap)}
 \begin{itemize}
 \item   \textbf{Technology}: Python-based high-interaction SSH/Telnet proxy.
 \item   \textbf{Function}: It mimics a UNIX filesystem. Attackers can \texttt{wget} malware, \texttt{cd} into directories, and run commands.
@@ -422,12 +460,12 @@ This architecture turns the table on attackers by deploying decoys. \\
 
 --- \\
 
-\subsection{9. Automated Vulnerability Management Strategy}
+\section{10. Automated Vulnerability Management Strategy}
 
-\subsubsection{9.1 Trivy Integration Model}
+\subsection{10.1 Trivy Integration Model}
 Instead of relying solely on Wazuh's "Vulnerability Detector" (which checks installed packages against CVE databases), we integrate \textbf{Trivy} for active container scanning. \\
 
-\subsubsection{9.2 The Scanner Script (`trivy\_{}scan.sh`)}
+\subsection{10.2 The Scanner Script (`trivy\_{}scan.sh`)}
 This custom script is the bridge between Trivy and Wazuh. \\
 \begin{enumerate}
 \item \textbf{Execution}: Runs every 3 days via Wazuh's Command Module.
@@ -447,9 +485,9 @@ This custom script is the bridge between Trivy and Wazuh. \\
 
 --- \\
 
-\subsection{10. Operational Manual: Deployment \& Maintenance}
+\section{11. Operational Manual: Deployment \& Maintenance}
 
-\subsubsection{10.1 Pre-Flight Check}
+\subsection{11.1 Pre-Flight Check}
 Before deployment, the host must be prepared: \\
 \begin{enumerate}
 \item \textbf{Kernel Tuning}: \texttt{vm.max\_{}map\_{}count} must be set to \texttt{262144} (required for OpenSearch mmapfs).
@@ -457,7 +495,7 @@ Before deployment, the host must be prepared: \\
 \item \textbf{Ports}: Ensure ports 443, 1514, 1515, 55000, 80, 2222, 2223 are free.
 \end{enumerate}
 
-\subsubsection{10.2 Deployment Sequence (Critical Order)}
+\subsection{11.2 Deployment Sequence (Critical Order)}
 \begin{enumerate}
 \item \textbf{Certificates}: Run \texttt{docker-compose -f generate-indexer-certs.yml run --rm generator} to create the SSL chain of trust.
 \item \textbf{Network}: \texttt{docker network create wazuh-net}.
