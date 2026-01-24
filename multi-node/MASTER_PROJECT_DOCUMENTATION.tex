@@ -7,6 +7,8 @@
 \usepackage{xcolor}
 \usepackage{longtable}
 \usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{float}
 
 \usepackage{tikz}
 \usetikzlibrary{shapes.geometric, arrows.meta, positioning, calc, shadows.blur, backgrounds, fit, decorations.pathreplacing}
@@ -98,6 +100,10 @@
 \author{\textbf{Abu Saeid}}
 \date{January 24, 2026}
 \begin{document}
+\begin{titlepage}
+    \centering
+    \includegraphics[width=1.0\textwidth]{Wazuh_SIEM_Cover_Page_v2.png}
+\end{titlepage}
 \maketitle
 \tableofcontents
 \newpage
@@ -189,15 +195,12 @@ The architecture is structured into logical layers, ensuring separation of conce
 
 \begin{figure}[ht!]
 \centering
-\fbox{
-    \begin{minipage}{0.8\textwidth}
+    \begin{minipage}{1.0\textwidth}
         \centering
-        \vspace{8cm}
-        \textbf{--- [PLACEHOLDER] INSERT SYSTEM ARCHITECTURE TIKZ CODE HERE ---}
-        \vspace{8cm}
+        \includegraphics[width=1.0\textwidth]{Wazuh_SIEM_High_Availability_Architecture.png}
     \end{minipage}
 }
-\caption{System Architecture Diagram (User Self-Design)}
+\caption{System Architecture Diagram}
 \end{figure}
 
 
@@ -207,15 +210,12 @@ This diagram illustrates the flow of a security event from an external agent to 
 
 \begin{figure}[ht!]
 \centering
-\fbox{
-    \begin{minipage}{0.8\textwidth}
+    \begin{minipage}{1.0\textwidth}
         \centering
-        \vspace{6cm}
-        \textbf{--- [PLACEHOLDER] INSERT SEQUENCE DIAGRAM TIKZ CODE HERE ---}
-        \vspace{6cm}
+        \includegraphics[width=1.0\textwidth]{Wazuh_Security_Event_Lifecycle.png}
     \end{minipage}
 }
-\caption{Security Event Lifecycle Sequence (User Self-Design)}
+\caption{Security Event Lifecycle Sequence}
 \end{figure}
 
 
@@ -225,15 +225,12 @@ This workflow shows the resilience mechanism providing zero-downtime during a ma
 
 \begin{figure}[ht!]
 \centering
-\fbox{
-    \begin{minipage}{0.8\textwidth}
+    \begin{minipage}{1.0\textwidth}
         \centering
-        \vspace{6cm}
-        \textbf{--- [PLACEHOLDER] INSERT WORKFLOW DIAGRAM TIKZ CODE HERE ---}
-        \vspace{6cm}
+        \includegraphics[width=1.0\textwidth]{Wazuh_HA_Failover_Workflow.png}
     \end{minipage}
 }
-\caption{Enterprise Resiliency Workflow (User Self-Design)}
+\caption{Enterprise Resiliency Workflow}
 \end{figure}
 
 

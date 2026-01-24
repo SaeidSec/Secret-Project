@@ -71,17 +71,122 @@ The system is built as a highly coupled microservices mesh consisting of **32+ D
 ### 3.1 System Architecture Diagram
 The architecture is structured into logical layers, ensuring separation of concerns and clear data flow.
 
-> **[PLACEHOLDER: INSERT YOUR SYSTEM ARCHITECTURE DIAGRAM HERE]**
+```mermaid
+graph TD
+    subgraph "External Entry (VIP 172.25.0.222)"
+        VRRP["🛡️ Keepalived (Active/Passive)"]
+    end
+
+    subgraph "Layer 1: Load Balancing & Resilience"
+        LB1["🌐 Nginx LB-1"]
+        LB2["🌐 Nginx LB-2"]
+        ANCHOR1[("⚓ lb-node-1 (Pause)")]
+        ANCHOR2[("⚓ lb-node-2 (Pause)")]
+        
+        ANCHOR1 --- LB1
+        ANCHOR2 --- LB2
+    end
+
+    subgraph "Layer 2: Application Tier"
+        W_MASTER["👑 Wazuh Master"]
+        W_WORKER["👷 Wazuh Worker"]
+        W_DASH["📊 Wazuh Dashboard"]
+    end
+
+    subgraph "Layer 3: Data Tier (Distributed)"
+        subgraph "Indexer Cluster"
+            IDX1[("W-Indexer 1")]
+            IDX2[("W-Indexer 2")]
+            IDX3[("W-Indexer 3")]
+        end
+        MONGO[("🍃 MongoDB (Graylog)")]
+        POSTGRES[("🐘 Postgres (Zabbix)")]
+    end
+
+    subgraph "Layer 4: Observability & Global SIEM"
+        Z_SERVER["🔍 Zabbix 7.0 Server"]
+        GRAFANA["📈 Grafana UI"]
+        PROM["🔥 Prometheus"]
+        GRAYLOG["📝 Graylog 7.0"]
+    end
+
+    subgraph "Layer 5: Threat Intel & active Defense"
+        BEELZEBUB["😈 Beelzebub (AI HP)"]
+        COWRIE["🐚 Cowrie (SSH HP)"]
+    end
+
+    %% Routing logic
+    VRRP --> LB1
+    LB1 --> W_DASH
+    LB1 --> W_MASTER
+    W_MASTER --> IDX1
+    W_WORKER --> IDX1
+    IDX1 --- IDX2 --- IDX3
+    W_DASH --> IDX1
+    
+    BEELZEBUB -.->|"JSON Logs"| W_MASTER
+    COWRIE -.->|"JSON Logs"| W_MASTER
+    
+    W_MASTER --> GRAYLOG
+    GRAYLOG --> IDX1
+    
+    Z_SERVER --> POSTGRES
+    GRAFANA --> Z_SERVER
+    GRAFANA --> PROM
+    GRAFANA --> IDX1
+```
 
 ### 3.2 System Sequence Diagram: Security Event Lifecycle
 This diagram illustrates the flow of a security event from an external agent to the final visualization.
 
-> **[PLACEHOLDER: INSERT YOUR SEQUENCE DIAGRAM HERE]**
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Agent as 🖥️ Wazuh Agent
+    participant VIP as 🛡️ Virtual IP (Keepalived)
+    participant LB as 🌐 Nginx Load Balancer
+    participant WM as 👑 Wazuh Manager (Master/Worker)
+    participant IDX as 🗄️ Wazuh Indexer (OpenSearch)
+    participant DB as 📊 Wazuh Dashboard
+    participant GL as 📝 Graylog
+
+    Agent->>VIP: Encrypted Log Stream (Port 1514)
+    VIP->>LB: Transparent Pass-through
+    LB->>WM: Consistent Hash Routing
+    WM->>WM: Parse, Decode, & Match Rules
+    
+    Note over WM: Rule Level > Threshold?
+    
+    WM->>IDX: Index Alert (Filebeat SSL)
+    WM-->>GL: Forward JSON Alert (Syslog)
+    
+    IDX->>DB: Synchronized Fetch
+    DB->>Admin: Real-time SOC Dashboard
+    
+    GL->>Admin: Long-term Analysis & Archiving
+```
 
 ### 3.3 Workflow Diagram: Automated Failover & Recovery
 This workflow shows the resilience mechanism providing zero-downtime during a maintenance event or crash.
 
-> **[PLACEHOLDER: INSERT YOUR WORKFLOW DIAGRAM HERE]**
+```mermaid
+flowchart TD
+    Start["▶️ Start Maintenance / Process Crash"] --> CheckPause{"Is 'lb-node' Anchor Running?"}
+    
+    CheckPause -- "Yes" --> NetStable["✅ Network Namespace Persists (IP stays UP)"]
+    CheckPause -- "No" --> NetDown["❌ Network Flush (VIP DROPS)"]
+    
+    NetStable --> LB_Restart["🔄 Nginx LB Restarts/Reloads"]
+    LB_Restart --> Reattach["🔗 Nginx Re-joins Anchor Namespace"]
+    
+    Reattach --> KA_Check{"Keepalived Health Check"}
+    KA_Check -- "Success" --> HoldVIP["💎 VIP Remains on Node (Stabilized)"]
+    KA_Check -- "Failure" --> Failover["🔀 VRRP Failover to Passive Node"]
+    
+    Failover --> BackupIP["✅ Backup Node Adopts VIP"]
+    HoldVIP --> End["🚀 Service Resilience Maintained"]
+    BackupIP --> End
+```
 
 ### 3.4 Tier 1: The Resilience Layer (Networking & HA)
 *   **Virtual IP (VIP)**: `172.25.0.222` - The single entry point for all traffic.
