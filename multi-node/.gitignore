@@ -16,3 +16,7 @@ logs.txt
 
 # Docker volumes
 **/data/
+
+# Large Binaries
+config/trivy/trivy
+config/trivy/docker

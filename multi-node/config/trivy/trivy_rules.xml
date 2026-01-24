@@ -1,0 +1,42 @@
+<group name="trivy,">
+  <!-- Parent Rule for Trivy alerts -->
+  <rule id="100201" level="0">
+    <decoded_as>trivy-decoder</decoded_as>
+    <description>Trivy alert detected.</description>
+  </rule>
+
+  <!-- This rule detects a critical severity vulnerability in a container image -->
+  <rule id="100202" level="14">
+    <if_sid>100201</if_sid>
+    <field name="severity">CRITICAL</field>
+    <description>Trivy alert [CRITICAL]: Vulnerabilty '$(vulnerability_id)' detected in package '$(package)' version '$(version)' on container image '$(image)'.</description>
+  </rule>
+
+  <!-- This rule detects a high severity vulnerability in a container image -->
+  <rule id="100203" level="12">
+    <if_sid>100201</if_sid>
+    <field name="severity">HIGH</field>
+    <description>Trivy alert [HIGH]: Vulnerabilty '$(vulnerability_id)' detected in package '$(package)' version '$(version)' on container image '$(image)'.</description>
+  </rule>
+
+  <!-- This rule detects a medium severity vulnerability in a container image -->
+  <rule id="100204" level="7">
+    <if_sid>100201</if_sid>
+    <field name="severity">MEDIUM</field>
+    <description>Trivy alert [MEDIUM]: Vulnerabilty '$(vulnerability_id)' detected in package '$(package)' version '$(version)' on container image '$(image)'.</description>
+  </rule>
+
+  <!-- This rule detects a low severity vulnerability in a container image -->
+  <rule id="100205" level="4">
+    <if_sid>100201</if_sid>
+    <field name="severity">LOW</field>
+    <description>Trivy alert [LOW]: Vulnerabilty '$(vulnerability_id)' detected in package '$(package)' version '$(version)' on container image '$(image)'.</description>
+  </rule>
+
+  <!-- This rule detects an unknown severity vulnerability in a container image -->
+  <rule id="100206" level="7">
+    <if_sid>100201</if_sid>
+    <field name="severity">UNKNOWN</field>
+    <description>Trivy alert [UNKNOWN]: Vulnerabilty '$(vulnerability_id)' detected in package '$(package)' version '$(version)' on container image '$(image)'.</description>
+  </rule>
+</group>

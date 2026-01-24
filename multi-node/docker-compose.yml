@@ -47,6 +47,13 @@ services:
       - cowrie-logs:/var/log/cowrie:ro
       - ./config/wazuh_cluster/beelzebub_rules.xml:/var/ossec/etc/rules/beelzebub_rules.xml:ro
       - ./config/wazuh_cluster/cowrie_rules.xml:/var/ossec/etc/rules/cowrie_rules.xml:ro
+      # Trivy Integration
+      - ./config/trivy/trivy:/usr/local/bin/trivy:ro
+      - ./config/trivy/docker:/usr/bin/docker:ro
+      - ./config/trivy/trivy_scan.sh:/var/ossec/custom-script/trivy_scan.sh
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./config/trivy/trivy_decoders.xml:/var/ossec/etc/decoders/trivy_decoders.xml:ro
+      - ./config/trivy/trivy_rules.xml:/var/ossec/etc/rules/trivy_rules.xml:ro
     networks:
       - wazuh-net
 

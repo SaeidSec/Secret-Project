@@ -690,6 +690,26 @@ INTERNAL PORTS (Container Network):
 
 
 ================================================================================
+14. TRIVY CONTAINER SECURITY
+================================================================================
+
+14.1 OVERVIEW
+  - Tool: Trivy (Container Vulnerability Scanner)
+  - Integration: Wazuh Command Module (Agentless style via Docker socket)
+  - Execution: Scheduled script on Wazuh Master
+
+14.2 COMPONENTS
+  - Binary: /usr/local/bin/trivy (Mounted)
+  - Script: /var/ossec/custom-script/trivy_scan.sh
+  - Decoders: trivy_decoders.xml
+  - Rules: trivy_rules.xml
+
+14.3 DATA FLOW
+  - Trivy Scans Docker Socket → JSON Output → Wazuh Agent reads output → 
+  - Wazuh Manager Decodes → Alerts generated (Critical/High/Medium/Low)
+
+
+================================================================================
 END OF DOCUMENT
 ================================================================================
 
