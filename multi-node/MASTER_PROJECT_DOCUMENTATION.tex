@@ -236,11 +236,10 @@ This workflow shows the resilience mechanism providing zero-downtime during a ma
 
 \subsubsection{3.4 Tier 1: The Resilience Layer (Networking \& HA)}
 \begin{itemize}
-\item   \textbf{Virtual IP (VIP)}: \texttt{172.25.0.222} - The single entry point for all traffic.
+\item   \textbf{Virtual IP (VIP)}: \texttt{172.25.0.222} (Aliased as \texttt{wazuh.vip} internally for decoupling).
 \item   \textbf{Protocol}: VRRP (Virtual Router Redundancy Protocol) via Keepalived.
 \item   \textbf{Load Balancers}: 2x Nginx nodes in Active/Passive configuration.
-\item   \textbf{Infrastructure Nodes}: 2x Alpine "Anchor" nodes holding the network namespaces.
-\end{itemize}
+\item   \textbf{Infrastructure Nodes}: 2x Alpine "Anchor" nodes holding the network namespaces.\end{itemize}
 
 \subsubsection{3.2 Tier 2: The Control Plane (Wazuh Core)}
 \begin{itemize}
@@ -329,7 +328,13 @@ This instructs Docker to \textbf{not} create a new network stack for them, but i
 \item   \textbf{L4 Streaming (TCP/UDP)}:
 \item   For Wazuh Agent traffic (1514), we use \textbf{Consistent Hashing} (\texttt{hash \$remote\_{}addr consistent}). This ensures that a specific agent always reconnects to the same Manager worker unless that worker is down. This is crucial for keeping partial log fragments together.
 \item   \textbf{L7 Proxying (HTTP)}:
-\item   For the Dashboard, Grafana, and Zabbix UI, Nginx acts as a standard Reverse Proxy, terminating SSL (if configured) and adding \texttt{X-Forwarded-For} headers so the backends see the real client IP, not the Docker bridge IP.
+\item   For the Dashboard, Grafana, and Zabbix UI, Nginx acts as a standard Reverse Proxy.
+\item   \textbf{Hardening}:
+    \begin{itemize}
+    \item \textbf{Global Timeouts}: \texttt{proxy\_connect\_timeout}, \texttt{proxy\_send\_timeout}, and \texttt{proxy\_read\_timeout} set to 60s to prevent hanging connections.
+    \item \textbf{Health Checks}: Upstreams configured with \texttt{max\_fails=3 fail\_timeout=30s} to intelligently avoid failing backends.
+    \item \textbf{Security Headers}: Injected \texttt{X-Forwarded-Proto \$scheme} for HTTPS redirection and \texttt{Upgrade}/\texttt{Connection} headers to support WebSockets (crucial for Grafana Live).
+    \end{itemize}
 \end{itemize}
 
 \subsubsection{5.4 Keepalived VRRP Logic}

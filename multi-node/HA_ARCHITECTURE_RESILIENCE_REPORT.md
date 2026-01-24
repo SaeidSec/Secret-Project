@@ -106,7 +106,7 @@ graph TD
     NGINX -- "Restarts/Updates" --> NGINX_NEW["🌐 Nginx (New PID)"]
     
     NIC ===|"PERSISTS (No Flapping)"| KA
-    KA ===|"HOLDS VIP (172.25.0.222)"| VIP["Virtual IP"]
+    KA ===|"HOLDS VIP (172.25.0.222 / wazuh.vip)"| VIP["Virtual IP"]
     
     style VIP fill:#fff9c4,stroke:#fbc02d,stroke-width:2px
 ```

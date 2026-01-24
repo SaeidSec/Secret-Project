@@ -189,7 +189,7 @@ flowchart TD
 ```
 
 ### 3.4 Tier 1: The Resilience Layer (Networking & HA)
-*   **Virtual IP (VIP)**: `172.25.0.222` - The single entry point for all traffic.
+*   **Virtual IP (VIP)**: `172.25.0.222` (Aliased as `wazuh.vip` internally for decoupling).
 *   **Protocol**: VRRP (Virtual Router Redundancy Protocol) via Keepalived.
 *   **Load Balancers**: 2x Nginx nodes in Active/Passive configuration.
 *   **Infrastructure Nodes**: 2x Alpine "Anchor" nodes holding the network namespaces.
@@ -264,7 +264,11 @@ This instructs Docker to **not** create a new network stack for them, but instea
 *   **L4 Streaming (TCP/UDP)**:
     *   For Wazuh Agent traffic (1514), we use **Consistent Hashing** (`hash $remote_addr consistent`). This ensures that a specific agent always reconnects to the same Manager worker unless that worker is down. This is crucial for keeping partial log fragments together.
 *   **L7 Proxying (HTTP)**:
-    *   For the Dashboard, Grafana, and Zabbix UI, Nginx acts as a standard Reverse Proxy, terminating SSL (if configured) and adding `X-Forwarded-For` headers so the backends see the real client IP, not the Docker bridge IP.
+    *   For the Dashboard, Grafana, and Zabbix UI, Nginx acts as a standard Reverse Proxy.
+    *   **Hardening**:
+        *   **Global Timeouts**: `proxy_connect_timeout`, `proxy_send_timeout`, and `proxy_read_timeout` set to 60s to prevent hanging connections.
+        *   **Health Checks**: Upstreams configured with `max_fails=3 fail_timeout=30s` to intelligently avoid failing backends.
+        *   **Security Headers**: Injected `X-Forwarded-Proto $scheme` for HTTPS redirection and `Upgrade`/`Connection` headers to support WebSockets (crucial for Grafana Live).
 
 ### 5.4 Keepalived VRRP Logic
 *   **State Machine**:

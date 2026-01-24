@@ -18,7 +18,7 @@ services:
     ports:
       - "514:514/udp"
     environment:
-      - INDEXER_URL=https://172.25.0.222:9200
+      - INDEXER_URL=https://wazuh.vip:9200
       - INDEXER_USERNAME=admin
       - INDEXER_PASSWORD=SecretPassword
       - FILEBEAT_SSL_VERIFICATION_MODE=full
@@ -56,6 +56,8 @@ services:
       - ./config/trivy/trivy_rules.xml:/var/ossec/etc/rules/trivy_rules.xml:ro
     networks:
       - wazuh-net
+    extra_hosts:
+      - "wazuh.vip:172.25.0.222"
 
   wazuh.worker:
     image: wazuh/wazuh-manager:4.14.1
@@ -71,7 +73,7 @@ services:
     expose:
       - "1514"
     environment:
-      - INDEXER_URL=https://172.25.0.222:9200
+      - INDEXER_URL=https://wazuh.vip:9200
       - INDEXER_USERNAME=admin
       - INDEXER_PASSWORD=SecretPassword
       - FILEBEAT_SSL_VERIFICATION_MODE=full
@@ -100,6 +102,8 @@ services:
       - ./config/wazuh_cluster/cowrie_rules.xml:/var/ossec/etc/rules/cowrie_rules.xml:ro
     networks:
       - wazuh-net
+    extra_hosts:
+      - "wazuh.vip:172.25.0.222"
 
   wazuh1.indexer:
     image: wazuh/wazuh-indexer:4.14.1
@@ -187,8 +191,8 @@ services:
     expose:
       - "5601"
     environment:
-      - OPENSEARCH_HOSTS="https://172.25.0.222:9200"
-      - WAZUH_API_URL="https://172.25.0.222"
+      - OPENSEARCH_HOSTS="https://wazuh.vip:9200"
+      - WAZUH_API_URL="https://wazuh.vip"
       - API_USERNAME=wazuh-wui
       - API_PASSWORD=MyS3cr37P450r.*-
       - DASHBOARD_USERNAME=kibanaserver
@@ -208,6 +212,8 @@ services:
       - wazuh.master:wazuh.master
     networks:
       - wazuh-net
+    extra_hosts:
+      - "wazuh.vip:172.25.0.222"
 
   # ============================================================================
   # HA NODE 1 (Pod-like Architecture)
