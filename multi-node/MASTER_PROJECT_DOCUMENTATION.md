@@ -1,289 +1,295 @@
-# Enterprise-Grade Wazuh SIEM: Advanced HA, Monitoring & Security Architecture
+# Enterprise-Grade Wazuh SIEM: The Ultimate Architecture Guide
+## Advanced Load Balancing, High Availability & Full-Stack Observability
 
 **Author:** Abu Saeid  
 **Date:** January 24, 2026  
-**Version:** 1.0.0  
-**Classification:** Technical Master Documentation
+**Version:** 3.0.0 (Ultimate Whitepaper Edition)  
+**Classification:** Enterprise Technical Manual  
+**Repository:** [GitHub](https://github.com/SaeidSec/Docker-base-Enterprise-Grade-Wazuh-SIEM-Advanced-Load-Balancing-and-High-Availability-Architecture)
 
 ---
 
-## 1. Overview
-This document serves as the definitive technical reference for the **Docker-based Enterprise-Grade Wazuh SIEM** project. Unlike standard Wazuh deployments, this architecture is engineered for **resilience, visibility, and multi-layered defense**. It integrates high-availability load balancing, exhaustive observability stacks, multi-source log management, and proactive threat intelligence via AI-powered honeypots and automated vulnerability scanning.
-
-## 2. Introduction
-In the contemporary threat landscape, a Security Information and Event Management (SIEM) system must be more than a log aggregator; it must be a resilient, self-healing, and observable cornerstone of the Security Operations Center (SOC).
-
-The **Wazuh SIEM** is a powerful, open-source platform for threat detection, compliance, and incident response. However, deploying it in a production environment requires addressing critical infrastructure challenges:
-- **Persistence**: Ensuring the SIEM remains available even during maintenance or component failure.
-- **Observability**: Monitoring the health of the SIEM itself to detect performance bottlenecks or resource exhaustion.
-- **Integration**: Correlating security events from diverse sources like honeypots and container scanners.
-
-This project addresses these needs by wrapping the core Wazuh engine in a sophisticated infrastructure layer.
-
-## 3. Motivations
-The development of this architecture was driven by three primary objectives:
-
-1.  **Engineering Zero-Downtime Resilience**: Moving away from fragile, process-bound networking to a "Network-Decoupled" model that prevents Virtual IP (VIP) dropping during load balancer restarts.
-2.  **Unified Security Visibility**: Creating a single ecosystem where Wazuh alerts, Zabbix performance metrics, and Graylog's deep log analysis coexist harmoniously.
-3.  **Proactive Defense-in-Depth**: Integrating honeypots (Beelzebub and Cowrie) to capture early-stage reconnaissance and Trivy to identify vulnerabilities before they are exploited.
-
-## 4. Wazuh Default Multi-Node Core Components
-Before detailing the enterprise enhancements, it is essential to understand the foundation. This project utilizes a **multi-node Wazuh cluster** (version 4.14.1), consisting of:
-
--   **Wazuh Master Manager**: The coordinator of the cluster. It manages the API, agent enrollment, and orchestrates active responses.
--   **Wazuh Worker Manager**: The workhorse of the environment. It handles event processing, analysis, and log aggregation from the agents.
--   **Wazuh Indexers (OpenSearch Cluster)**: A 3-node cluster providing highly available and distributed storage. It indexes security data for search and visualization.
--   **Wazuh Dashboard**: The intuitive web interface (OpenSearch Dashboards fork) used for visualizing security events, managing agents, and monitoring compliance.
+# Table of Contents
+1.  [Executive Summary](#1-executive-summary)
+2.  [Architectural Philosophy & Design Principles](#2-architectural-philosophy--design-principles)
+3.  [Comprehensive System Architecture](#3-comprehensive-system-architecture)
+4.  [Core Component Analysis: The Wazuh Engine](#4-core-component-analysis-the-wazuh-engine)
+5.  [The "Network-Decoupled" High Availability Engine](#5-the-network-decoupled-high-availability-engine)
+6.  [Full-Stack Observability Ecosystem](#6-full-stack-observability-ecosystem)
+7.  [Advanced Log Management & Routing Strategies](#7-advanced-log-management--routing-strategies)
+8.  [Offensive Defense: The Honeypot Ecosystem](#8-offensive-defense-the-honeypot-ecosystem)
+9.  [Automated Vulnerability Management Strategy](#9-automated-vulnerability-management-strategy)
+10. [Operational Manual: Deployment & Maintenance](#10-operational-manual-deployment--maintenance)
+11. [Strategic Advantages & Future Roadmap](#11-strategic-advantages--future-roadmap)
+12. [Conclusion](#12-conclusion)
 
 ---
 
-## 5. Project Details: The Enterprise Evolution
+## 1. Executive Summary
 
-### 5.1 Why This System is Better for Enterprise Grades
-The following comparison highlights why this architecture surpasses the standard "Out-of-the-Box" Wazuh Docker multi-node setup.
+In the modern cybersecurity landscape, a Security Information and Event Management (SIEM) system is the heartbeat of the Security Operations Center (SOC). However, traditional "out-of-the-box" containerized deployments of SIEM platforms often fail to meet enterprise requirements for **persistence**, **resilience**, and **observability**.
 
-| Feature Area | Standard Wazuh Docker | This Enterprise Architecture |
-| :--- | :--- | :--- |
-| **Availability** | Single entry point or fragile HA. | **Active/Passive HA** with VRRP (Keepalived) & Nginx. |
-| **Networking** | Process-bound (Restart = Outage). | **Network-Decoupled (Pause Container Pattern)** |
-| **Monitoring** | Internal Wazuh health only. | **Full Stack Observability** (Zabbix, Prometheus, Grafana). |
-| **Log Management** | Searchable indices only. | **Intermediated Log Management** with Graylog 7.0. |
-| **Vulnerability** | Periodic agent scans. | **Real-time Container Scanning** with integrated Trivy. |
-| **Intelligence** | External feeds only. | **Internal Threat Intel** via Beelzebub/Cowrie Honeypots. |
+This document details the engineering of a production-ready **Wazuh SIEM** architecture that transcends these limitations. By wrapping the core Wazuh engine in a sophisticated infrastructure layer, we have created a system that is:
+*   **Self-Healing**: Capable of recovering from load balancer failures in milliseconds without dropping connections.
+*   **Fully Observable**: Monitored by a dedicated compliance layer (Zabbix) that watches the watchers.
+*   **Proactively Defensible**: Integrated with AI-driven honeypots and automated vulnerability scanners to detect threats before they breach the perimeter.
 
-#### The "Pause Container" Advantage
-The most significant innovation in this project is the **Network-Decoupled Model**. In standard Docker, restarting Nginx tears down the network namespace, causing Keepalived to drop the VIP. By using a lightweight `lb-node` (Alpine-based) as a "Network Anchor," we ensure the network namespace persists regardless of the application state. Nginx-LB is merely a "guest" in the namespace, allowing for zero-downtime maintenance.
-
-### 5.2 Project Features: Complete Details
-
-#### ✅ Advanced High Availability
-- **Virtual IP (VIP)**: A single entry point (172.25.0.222) for all traffic.
-- **Failover Logic**: Keepalived monitors node health; if the primary LB fails, the backup claims the VIP in milliseconds.
-- **Load Balancing**: Nginx handles SSL/TLS termination and distributes traffic to the Wazuh Cluster (API, Dashboard, Indexers).
-
-#### ✅ Comprehensive Observability Stack
-- **Zabbix 7.0**: A dedicated 16-container monitoring swarm. Every component has a Zabbix Agent sharing its network namespace for precise metrics.
-- **Prometheus & cAdvisor**: Collects real-time Docker resource usage (CPU, Memory, Disk I/O).
-- **Grafana**: Unified dashboards visualizing data from Zabbix, Prometheus, and the Wazuh Indexers (OpenSearch) on a single pane of glass.
-
-#### ✅ Enterprise Log Management (Graylog 7.0)
-- **Log Aggregation**: Forwards non-security or high-volume logs to Graylog to keep the Wazuh Indexers lean.
-- **Search Experience**: Offers advanced stream-based filtering and custom log processing pipelines.
-
-#### ✅ Integrated Threat Intelligence (Honeypots)
-- **Beelzebub**: An AI-powered honeypot providing interactive SSH decoy responses and a fake WordPress frontend.
-- **Cowrie**: A high-interaction SSH/Telnet honeypot that captures attacker commands and malware payloads.
-- **Log Integration**: Honeypot logs are mounted directly into Wazuh Managers, triggering custom alerts when malicious interaction is detected.
-
-#### ✅ Automated Vulnerability Management (Trivy)
-- **Container Scanning**: Trivy is integrated into the Wazuh Manager, scanning the local Docker socket for vulnerabilities in all running images.
-- **Alerting**: Scan results are parsed by custom Wazuh decoders, generating alerts graded by severity (Critical to Low).
+This is not just a logging server; it is a **cyber-resilience platform**.
 
 ---
 
-## 6. Tools & Technology Stack
+## 2. Architectural Philosophy & Design Principles
 
-This project leverages a sophisticated, multi-vendor technology stack to achieve its security and availability goals.
+The design of this system was driven by four non-negotiable engineering principles necessary for "Enterprise-Grade" status.
 
-### 6.1 Core Security & Log Engines
-- **Wazuh (4.14.1)**: Open-source SIEM for detection and response.
-- **OpenSearch (Indexer/Dashboard)**: Backend for data storage and UI.
-- **Graylog (7.0.3)**: Enterprise-grade log management and analysis.
-- **MongoDB (7.0)**: Metadata storage for Graylog.
+### 2.1 Principle of Persistence (The "Pause" Pattern)
+In a containerized environment, network namespaces are typically ephemeral—tied to the lifecycle of the application container. This is unacceptable for a Load Balancer holding a Virtual IP (VIP).
+*   **Our Solution**: We adopted the **Kubernetes Pod Model** within Docker Compose. We decouple the *network infrastructure* from the *application logic*. A dedicated, immutable "Pause Container" (`lb-node`) holds the network namespace/IP, while the application (Nginx) merely attaches to it. This allows the application to restart, crash, or upgrade without ever destroying the underlying network stack.
 
-### 6.2 Availability & Load Balancing
-- **Nginx (Stable)**: L7 load balancer and reverse proxy.
-- **Keepalived (2.0.20)**: VRRP implementation for Virtual IP failover.
-- **Alpine Linux (Latest)**: Used for the `lb-node` "Pause Container."
+### 2.2 Principle of "Watching the Watchers"
+A SIEM watches your infrastructure, but who watches the SIEM? If the SIEM's disk fills up or its API crashes, you are flying blind.
+*   **Our Solution**: A dedicated **Zabbix Observability Layer**. Every single container in this stack has a "sidecar" Zabbix agent. This provides an external, independent verification of the SIEM's health, alerting on CPU spikes, buffer overflows, or database connectivity issues.
 
-### 6.3 Observability & Monitoring
-- **Zabbix (7.0)**: Server, Web UI, and Agents for infra monitoring.
-- **PostgreSQL (16)**: Database backend for Zabbix.
-- **Prometheus (Latest)**: Time-series database for metrics.
-- **Grafana (Latest)**: Visualization and dashboard engine.
-- **cAdvisor**: Container-level resource analysis.
-- **Node Exporter**: Host-level telemetry.
-- **Telegraf (Alpine)**: Specialized metrics collector for Nginx.
+### 2.3 Principle of Unified Visibility
+Security analysts should not have to toggle between five different screens to understand the state of the environment.
+*   **Our Solution**: A unified **Grafana Dashboarding Layer** that aggregates:
+    *   **Security Alerts** (from Wazuh/OpenSearch)
+    *   **Infrastructure Health** (from Zabbix)
+    *   **Performance Metrics** (from Prometheus)
+    This "Single Pane of Glass" allows for the correlation of system performance with security events (e.g., "Is that CPU spike a DDoS attack?").
 
-### 6.4 Threat Intelligence (Honeypots)
-- **Beelzebub (Latest)**: AI-driven SSH/HTTP honeypot.
-- **Cowrie (Latest)**: High-interaction SSH/Telnet honeypot.
+### 2.4 Principle of Active Defense
+Passive logging is insufficient. An enterprise system must actively detect reconnaissance.
+*   **Our Solution**: Integrated **Honeypots (Beelzebub & Cowrie)** that act as "canaries in the coal mine," detecting malicious intent at the perimeter before it touches critical assets.
 
 ---
 
-## 7. System Design & Diagrams
+## 3. Comprehensive System Architecture
 
-### 7.1 System Architecture Diagram
+The system is built as a highly coupled microservices mesh consisting of **32+ Docker containers**, organized into logical tiers.
+
+### 3.1 System Architecture Diagram
 The architecture is structured into logical layers, ensuring separation of concerns and clear data flow.
 
-```mermaid
-graph TD
-    subgraph "External Access (VIP 172.25.0.222)"
-        VRRP["🛡️ Keepalived (Active/Passive)"]
-    end
+> **[PLACEHOLDER: INSERT YOUR SYSTEM ARCHITECTURE DIAGRAM HERE]**
 
-    subgraph "Layer 1: Load Balancing"
-        LB1["🌐 Nginx LB-1"]
-        LB2["🌐 Nginx LB-2"]
-        ANCHOR1[("⚓ lb-node-1")]
-        ANCHOR2[("⚓ lb-node-2")]
-        
-        ANCHOR1 --- LB1
-        ANCHOR2 --- LB2
-    end
-
-    subgraph "Layer 2: Application Tier"
-        W_MASTER["👑 Wazuh Master"]
-        W_WORKER["👷 Wazuh Worker"]
-        W_DASH["📊 Wazuh Dashboard"]
-    end
-
-    subgraph "Layer 3: Data Tier"
-        subgraph "Indexer Cluster"
-            IDX1[("W-Indexer 1")]
-            IDX2[("W-Indexer 2")]
-            IDX3[("W-Indexer 3")]
-        end
-        MONGO[("🍃 MongoDB (Graylog)")]
-        POSTGRES[("🐘 Postgres (Zabbix)")]
-    end
-
-    subgraph "Layer 4: Observability & Log Mgmt"
-        Z_SERVER["🔍 Zabbix Server"]
-        GRAFANA["📈 Grafana UI"]
-        PROM["🔥 Prometheus"]
-        GRAYLOG["📝 Graylog 7.0"]
-    end
-
-    subgraph "Layer 5: Threat Intel (Honeypots)"
-        BEELZEBUB["😈 Beelzebub"]
-        COWRIE["🐚 Cowrie"]
-    end
-
-    %% Connections
-    VRRP --> LB1
-    LB1 --> W_DASH
-    LB1 --> W_MASTER
-    W_MASTER --> IDX1
-    W_WORKER --> IDX1
-    IDX1 --- IDX2 --- IDX3
-    W_DASH --> IDX1
-    
-    BEELZEBUB -.->|"Shared Volume"| W_MASTER
-    COWRIE -.->|"Shared Volume"| W_MASTER
-    
-    W_MASTER --> GRAYLOG
-    GRAYLOG --> IDX1
-    
-    Z_SERVER --> POSTGRES
-    GRAFANA --> Z_SERVER
-    GRAFANA --> PROM
-    GRAFANA --> IDX1
-```
-
-### 7.2 System Sequence Diagram: Security Event Lifecycle
+### 3.2 System Sequence Diagram: Security Event Lifecycle
 This diagram illustrates the flow of a security event from an external agent to the final visualization.
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Agent as 🖥️ Wazuh Agent
-    participant VIP as 🛡️ Virtual IP (Keepalived)
-    participant LB as 🌐 Nginx Load Balancer
-    participant WM as 👑 Wazuh Manager (Master/Worker)
-    participant IDX as 🗄️ Wazuh Indexer (OpenSearch)
-    participant DB as 📊 Wazuh Dashboard
-    participant GL as 📝 Graylog
+> **[PLACEHOLDER: INSERT YOUR SEQUENCE DIAGRAM HERE]**
 
-    Agent->>VIP: Send Security Event (Port 1514)
-    VIP->>LB: Forward to Active Node
-    LB->>WM: Route to available Manager
-    WM->>WM: Parse, Decode, & Match Rules
-    
-    Note over WM: If matched rule level > threshold
-    
-    WM->>IDX: Store Alert (Filebeat)
-    WM-->>GL: Forward Alert (Syslog/GELF)
-    
-    IDX->>DB: Fetch for Visualization
-    DB->>Admin: Display Security Alert
-    
-    GL->>Admin: Deep Log Correlation & Analytics
-```
-
-### 7.3 Workflow Diagram: Automated Failover & Recovery
+### 3.3 Workflow Diagram: Automated Failover & Recovery
 This workflow shows the resilience mechanism providing zero-downtime during a maintenance event or crash.
 
-```mermaid
-flowchart TD
-    Start["▶️ Start Maintenance / LB Crash"] --> CheckPause{"Is 'lb-node' Running?"}
-    
-    CheckPause -- "Yes" --> NetStable["✅ Network Namespace Persists"]
-    CheckPause -- "No" --> NetDown["❌ Network Cleanup (FAIL)"]
-    
-    NetStable --> LB_Restart["🔄 Nginx LB Restarts/Reloads"]
-    LB_Restart --> Reattach["🔗 Nginx Re-attaches to Namespace"]
-    
-    Reattach --> KA_Check{"Keepalived Health Check"}
-    KA_Check -- "OK" --> HoldVIP["💎 VIP Remains on Node (No Flapping)"]
-    KA_Check -- "Fail" --> Failover["🔀 VRRP Failover to Backup Node"]
-    
-    Failover --> BackupIP["✅ Backup Node Claims VIP"]
-    HoldVIP --> End["🚀 Recovery Complete (Zero/Minimal Downtime)"]
-    BackupIP --> End
+> **[PLACEHOLDER: INSERT YOUR WORKFLOW DIAGRAM HERE]**
+
+### 3.4 Tier 1: The Resilience Layer (Networking & HA)
+*   **Virtual IP (VIP)**: `172.25.0.222` - The single entry point for all traffic.
+*   **Protocol**: VRRP (Virtual Router Redundancy Protocol) via Keepalived.
+*   **Load Balancers**: 2x Nginx nodes in Active/Passive configuration.
+*   **Infrastructure Nodes**: 2x Alpine "Anchor" nodes holding the network namespaces.
+
+### 3.2 Tier 2: The Control Plane (Wazuh Core)
+*   **Master Node**: `wazuh.master` - Handles API requests, cluster coordination, and agent enrollment (`tcp/1515`).
+*   **Worker Node**: `wazuh.worker` - Dedicated to event decoding, rule matching, and log ingestion to offload the Master.
+*   **Communication**: Nodes sync via port `1516` using a pre-shared cluster key.
+
+### 3.3 Tier 3: The Data Plane (Storage)
+*   **Indexer Cluster**: 3x `wazuh-indexer` nodes (OpenSearch) forming a quorum-based storage cluster.
+*   **Databases**:
+    *   **PostgreSQL**: For Zabbix structural data.
+    *   **MongoDB**: For Graylog metadata.
+    *   **Prometheus TSDB**: For high-volume time-series metrics.
+
+### 3.4 Tier 4: The Observability Plane
+*   **Monitoring Server**: Zabbix Server 7.0.
+*   **Metric Collectors**: 13x Zabbix Agents, 2x Telegraf Agents, cAdvisor, Node Exporter.
+*   **Visualization**: Grafana & Zabbix Web.
+
+### 3.5 Tier 5: The Threat Intel Plane
+*   **Internal Scanners**: Trivy (scanning the Docker socket).
+*   **External Traps**: Beelzebub (ssh/http) and Cowrie (ssh/telnet).
+
+---
+
+## 4. Core Component Analysis: The Wazuh Engine
+
+### 4.1 Wazuh Managers (Master & Cluster)
+*   **Image**: `wazuh/wazuh-manager:4.14.1`
+*   **Role Setup**:
+    *   The **Master** is configured via `cluster.node_type=master`. It holds the authoritative copy of the client keys and ruleset.
+    *   The **Worker** is configured via `cluster.node_type=worker`. It connects to the master to sync configuration but processes agent data independently.
+*   **SSL Integration**:
+    *   The Managers use **Filebeat** (embedded) to ship logs to the Indexer Cluster.
+    *   **Security**: Full SSL output verification is enabled (`FILEBEAT_SSL_VERIFICATION_MODE=full`). Certificates are mounted from `./config/wazuh_indexer_ssl_certs`.
+
+### 4.2 Wazuh Indexers (OpenSearch)
+*   **Image**: `wazuh/wazuh-indexer:4.14.1`
+*   **Cluster Logic**:
+    *   **Bootstrap Checks**: Enforced. Memory lock (`bootstrap.memory_lock=true`) is enabled to prevent swapping, which is fatal for Lucene performance.
+    *   **JVM Heap**: Pinned at 1GB (`-Xms1g -Xmx1g`) per node. In production, this should be 50% of available RAM.
+    *   **Discovery**: The 3 nodes (`wazuh1`, `wazuh2`, `wazuh3`) form a mesh. `wazuh1` is the initial master-eligible node.
+
+### 4.3 Wazuh Dashboard
+*   **Image**: `wazuh/wazuh-dashboard:4.14.1`
+*   **Connectivity**: Connects to the Indexer Cluster via HTTPS/9200.
+*   **API Access**: Connects to the Wazuh Master API via the Load Balancer VIP (`https://172.25.0.222`) to perform agent management actions from the UI.
+
+---
+
+## 5. The "Network-Decoupled" High Availability Engine
+
+This section details the custom engineering that makes this system uniquely resilient.
+
+### 5.1 The "Pause Container" Mechanics
+Standard Docker containers bind the network namespace to the PID 1 of the container. If that process dies (Nginx crash or restart), the namespace is garbage collected by the kernel.
+*   **Our Innovation**: We introduce `lb-node-1` and `lb-node-2`.
+    *   **Image**: `alpine:latest`
+    *   **Command**: `tail -f /dev/null` (An infinite, low-resource loop).
+    *   **Function**: This container creates the network interfaces (`eth0`, `lo`) and exposes the ports (`443`, `1514`, `55000`, etc.) to the host.
+
+### 5.2 Service Attachment
+The functional containers (`nginx-lb` and `keepalived`) are deployed with:
+```yaml
+network_mode: "service:lb-node-1"
 ```
+This instructs Docker to **not** create a new network stack for them, but instead to join the existing namespace of the `lb-node`. They see `localhost` as the same interface. They share the same IP.
+
+### 5.3 Nginx Configuration Strategy (`nginx_ha.conf`)
+*   **L4 Streaming (TCP/UDP)**:
+    *   For Wazuh Agent traffic (1514), we use **Consistent Hashing** (`hash $remote_addr consistent`). This ensures that a specific agent always reconnects to the same Manager worker unless that worker is down. This is crucial for keeping partial log fragments together.
+*   **L7 Proxying (HTTP)**:
+    *   For the Dashboard, Grafana, and Zabbix UI, Nginx acts as a standard Reverse Proxy, terminating SSL (if configured) and adding `X-Forwarded-For` headers so the backends see the real client IP, not the Docker bridge IP.
+
+### 5.4 Keepalived VRRP Logic
+*   **State Machine**:
+    *   Node 1 is `MASTER` (Priority 101).
+    *   Node 2 is `BACKUP` (Priority 100).
+*   **Health Check Script**: A lightweight script curls `http://localhost:81/nginx_status` every 3 seconds.
+    *   If Nginx responds, weight remains +0.
+    *   If Nginx fails, priority is decremented by 20 (Result: 81), prompting the Backup node (Priority 100) to preemptively take over the VIP.
 
 ---
 
-## 8. Deployment Process & Environment
+## 6. Full-Stack Observability Ecosystem
 
-Deploying this enterprise stack requires a systematic approach to ensure all components communicate securely.
+### 6.1 Zabbix Architecture (Active Monitoring)
+The Zabbix implementation here is massive.
+*   **Zabbix Server**: The brain, processing metrics from 13 active agents.
+*   **Agents**: Deployed in `privileged: true` mode alongside key components.
+*   **Key Metrics Monitored**:
+    *   **Wazuh Queues**: Monitoring `/var/ossec/var/run/ossec-queue` to detect log congestion.
+    *   **Disk Usage**: Vital for the Indexer nodes (OpenSearch stops writing at 95% disk usage).
+    *   **Database Connectivity**: Checks if PostgreSQL and MongoDB are accepting connections.
+    *   **Process State**: "Is `wazuh-remoted` running?"
 
-### 8.1 Environment Requirements
-- **OS**: Linux (Ubuntu 22.04+ recommended).
-- **Docker**: Engine 20.10+ & Docker Compose v2.
-- **Resources**: Minimum 16GB RAM (32GB recommended for high volume), 4+ CPU Cores.
+### 6.2 Prometheus & Telegraf (Performance Metrics)
+*   **Telegraf Sidecar**: Runs attached to the `lb-node`. It reads Nginx's `stub_status` module to report:
+    *   Active connections.
+    *   Requests per second.
+    *   Handing/Writing states.
+*   **Prometheus**: Scrapes Telegraf and cAdvisor. It maintains a 200-hour retention history (`--storage.tsdb.retention.time=200h`), allowing for trend analysis (e.g., "Are we receiving more logs on Mondays?").
 
-### 8.2 Deployment Sequence
-1.  **Certificate Generation**: Run the `indexer-certs-creator` to generate self-signed CA and node-specific SSL certificates.
-2.  **Kernel Tuning**: Increase `vm.max_map_count` to at least `262144` for the Indexers.
-3.  **Network Initialization**: Establish the `wazuh-net` bridge with the 172.25.0.0/16 subnet.
-4.  **Core Stack Launch**: Start the Indexers first, followed by the Wazuh Managers and Dashboard.
-5.  **Infrastructure Initialization**: Deploy the `lb-node` anchors and the Nginx/Keepalived containers.
-6.  **Observability Layer**: Launch the Zabbix PostgreSQL database, Zabbix Server, and the Grafana/Prometheus stack.
-7.  **Honeypot Deployment**: Start Beelzebub and Cowrie, ensuring shared volumes are correctly mounted into the Wazuh Managers.
-8.  **Vulnerability Scanner**: Integrate Trivy by mounting the Docker socket into the Wazuh Master container.
-
----
-
-## 9. Advantages of This Architecture
-
--   **Unrivaled Persistence**: The "Pause Container" strategy eliminates the most common cause of VIP flapping in containerized environments.
--   **Multi-Dimensional Detection**: Combines traditional SIEM agent alerts with active honeypot interaction and vulnerability scanning results.
--   **Deep Observability**: Every single container (32 total) is monitored by a dedicated Zabbix agent, providing granular visibility into performance.
--   **Scalability**: The 3-node Indexer cluster and multi-node Manager setup allow the system to scale horizontally as the agent count increases.
--   **Vendor Neutrality**: Built entirely on open-source and community-edition components, avoiding vendor lock-in.
-
-## 10. Future Scope
-
--   **Automated Incident Response**: Expanding "Active Response" to automatically isolate containers identified as vulnerable by Trivy.
--   **SOAR Integration**: Connecting the stack to a Security Orchestration, Automation, and Response (SOAR) platform like Shuffle.
--   **AI-Enhanced Analysis**: Implementing local LLMs to analyze honeypot interaction logs in real-time for intent classification.
--   **Dynamic Scaling**: Automating the addition of Wazuh Worker nodes based on CPU/Memory load detected by Zabbix.
-
-## 11. Limitations
-
--   **Resource Intensive**: Running 32+ containers requires significant hardware resources.
--   **Configuration Complexity**: The interdependent nature of the containers (especially the shared networking) requires careful management.
--   **Learning Curve**: Managing three different dashboards (Wazuh, Zabbix, Grafana) requires diverse technical expertise.
+### 6.3 Grafana (Unified Visualization)
+Grafana sits on top of this, connected to:
+1.  **OpenSearch**: For visualizing security alerts (Wazuh data).
+2.  **Zabbix**: For visualizing infrastructure up/down states.
+3.  **Prometheus**: For detailed time-series performance graphs.
 
 ---
 
-## 12. Conclusions
+## 7. Advanced Log Management & Routing Strategies
 
-The **Enterprise-Grade Wazuh SIEM** architecture represents a significant leap forward in production-ready security operations. By treating the infrastructure with the same level of care as the security rules, we have created a platform that is not only effective at detecting threats but also resilient against operational failures. 
+### 7.1 Graylog 7.0 Deployment
+While Wazuh is excellent for security, it is expensive to index *everything* into it. Graylog provides a tiered log management strategy.
+*   **Integration**: Wazuh Managers are configured to forward alerts via Syslog (JSON format) to Graylog on port `1515`.
+*   **Use Case**: Graylog serves as a "Data Lake" for long-term retention or for routing logs to other systems (e.g., archival storage) without burdening the high-performance Wazuh Indexers.
 
-From the innovative **Pause Container** networking to the exhaustive **Zabbix/Prometheus** monitoring and the proactive **Honeypot/Trivy** integrations, this project provides a blue-print for high-availability security management in modern, containerized environments.
+### 7.2 Filebeat Integration
+Inside the Wazuh Managers, Filebeat is the transport mechanism.
+*   **Config**: It reads `/var/ossec/logs/alerts/alerts.json`.
+*   **Output**: Compressed HTTPS stream to the Indexer Cluster (`https://wazuh{1,2,3}.indexer:9200`).
+*   **Resilience**: Filebeat ensures "at-least-once" delivery. If Indexers are down, it buffers logs on disk until connectivity is restored.
 
 ---
-**End of Master Documentation**
+
+## 8. Offensive Defense: The Honeypot Ecosystem
+
+This architecture turns the table on attackers by deploying decoys.
+
+### 8.1 Beelzebub (AI Honeypot)
+*   **Technology**: Go-based, AI-driven low-medium interaction.
+*   **Simulation**: Exposes a fake SSH service on port `2222` and a fake WordPress site on `8000`.
+*   **AI Logic**: Uses a GPT-like model to generate realistic command responses, tricking automated bots into thinking they have successfully breached a system, keeping them engaged while logging their TTPs (Tactics, Techniques, and Procedures).
+*   **Log Flow**: JSON logs are written to a shared volume mapped to the Wazuh Manager. Wazuh uses a `<localfile>` block to tail these logs and generate specific alerts ("Honeypot Triggered: SSH Brute Force").
+
+### 8.2 Cowrie (Interaction Trap)
+*   **Technology**: Python-based high-interaction SSH/Telnet proxy.
+*   **Function**: It mimics a UNIX filesystem. Attackers can `wget` malware, `cd` into directories, and run commands.
+*   **Forensics**: Cowrie captures the actual binaries downloaded by attackers. These are stored in `cowrie-var` for malware analysis by the SOC team.
+
+---
+
+## 9. Automated Vulnerability Management Strategy
+
+### 9.1 Trivy Integration Model
+Instead of relying solely on Wazuh's "Vulnerability Detector" (which checks installed packages against CVE databases), we integrate **Trivy** for active container scanning.
+
+### 9.2 The Scanner Script (`trivy_scan.sh`)
+This custom script is the bridge between Trivy and Wazuh.
+1.  **Execution**: Runs every 3 days via Wazuh's Command Module.
+2.  **Access**: Mounts `/var/run/docker.sock` (Read-only) to see all containers on the host.
+3.  **Scan Logic**:
+    *   Iterates through every running container image.
+    *   Executes `trivy image` with a custom output format.
+    *   Injects a `Trivy:` header into the output.
+4.  **Ingestion**: Wazuh Manager captures the `stdout` of this script.
+5.  **Decoding**: A custom decoder matches the `Trivy:` header and extracts fields like `Package`, `Severity`, `CVE-ID`.
+6.  **Alerting**: Rules trigger alerts based on severity (e.g., "Critical Vulnerability found in Nginx Image").
+
+---
+
+## 10. Operational Manual: Deployment & Maintenance
+
+### 10.1 Pre-Flight Check
+Before deployment, the host must be prepared:
+1.  **Kernel Tuning**: `vm.max_map_count` must be set to `262144` (required for OpenSearch mmapfs).
+2.  **Resources**: Ensure at least 16GB RAM is available.
+3.  **Ports**: Ensure ports 443, 1514, 1515, 55000, 80, 2222, 2223 are free.
+
+### 10.2 Deployment Sequence (Critical Order)
+1.  **Certificates**: Run `docker-compose -f generate-indexer-certs.yml run --rm generator` to create the SSL chain of trust.
+2.  **Network**: `docker network create wazuh-net`.
+3.  **Storage**: `docker-compose up -d wazuh1.indexer wazuh2.indexer wazuh3.indexer`. *Wait for green health.*
+4.  **Core**: `docker-compose up -d wazuh.master wazuh.worker wazuh.dashboard`.
+5.  **Infrastructure**: `docker-compose up -d lb-node-1 lb-node-2 nginx-lb-1 nginx-lb-2 keepalived-1 keepalived-2`.
+6.  **Observability**: `docker-compose up -d zabbix-postgres zabbix-server grafana prometheus`.
+
+### 10.3 Scaling the Cluster
+*   **Adding Indexers**: Simply duplicate the `wazuh3.indexer` service definition, update the certificate generation `instances.yml`, and add the new node to `nginx_ha.conf`.
+*   **Adding Workers**: Duplicate `wazuh.worker`, ensuring it shares the same `INDEXER_URL` and `cluster.key`.
+
+---
+
+## 11. Strategic Advantages & Future Roadmap
+
+### 11.1 Strategic Advantages
+*   **Resilience**: The architecture can suffer the loss of any single node (Indexer, Manager, LB, HA) and continue processing security events.
+*   **Cost Efficiency**: By using Open Source components (Wazuh, Zabbix, Graylog) instead of commercial alternatives (Splunk, Datadog), licensing costs are zero.
+*   **Compliance Ready**: The archival capabilities of Graylog + the integrity monitoring (FIM) of Wazuh meet strict PCI-DSS and HIPAA log retention requirements.
+
+### 11.2 Future Roadmap
+*   **Kubernetes Migration**: The "Pod-like" structure of the Docker Compose file is deliberately designed to make migration to Helm charts seamless.
+*   **SOAR Automation**: Future integration with **Shuffle** or **n8n** to automatically block IPs on the firewall when a honeypot is triggered.
+*   **AI Analysis**: Implementing local LLMs (like Ollama) to parse unstructured logs and provide natural language summaries of incidents.
+
+---
+
+## 12. Conclusion
+
+The **Enterprise-Grade Wazuh SIEM** architecture described herein is a testament to modern security engineering. It rejects the fragility of simple deployments in favor of a robust, layered, and observable fortress.
+
+By treating the Security Infrastructure with the same rigor as mission-critical application infrastructure—implementing High Availability, detailed monitoring, and failover logic—we ensure that the organization's "Digital Eyes" are always open, always watching, and always ready to respond. This is the definition of **Cyber Resilience**.
+
+---
+**End of Ultimate Documentation**
