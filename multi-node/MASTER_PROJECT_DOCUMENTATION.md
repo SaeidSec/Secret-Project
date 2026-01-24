@@ -73,13 +73,13 @@ The architecture is structured into logical layers, ensuring separation of conce
 
 ```mermaid
 graph TD
-    subgraph "External Entry (VIP 172.25.0.222)"
+    subgraph "External Entry (VIP 172.25.0.222 / wazuh.vip)"
         VRRP["🛡️ Keepalived (Active/Passive)"]
     end
 
     subgraph "Layer 1: Load Balancing & Resilience"
-        LB1["🌐 Nginx LB-1"]
-        LB2["🌐 Nginx LB-2"]
+        LB1["🌐 Hardened Nginx LB-1"]
+        LB2["🌐 Hardened Nginx LB-2"]
         ANCHOR1[("⚓ lb-node-1 (Pause)")]
         ANCHOR2[("⚓ lb-node-2 (Pause)")]
         
@@ -143,8 +143,8 @@ This diagram illustrates the flow of a security event from an external agent to 
 sequenceDiagram
     autonumber
     participant Agent as 🖥️ Wazuh Agent
-    participant VIP as 🛡️ Virtual IP (Keepalived)
-    participant LB as 🌐 Nginx Load Balancer
+    participant VIP as 🛡️ VIP (172.25.0.222 / wazuh.vip)
+    participant LB as 🌐 Hardened Nginx LB
     participant WM as 👑 Wazuh Manager (Master/Worker)
     participant IDX as 🗄️ Wazuh Indexer (OpenSearch)
     participant DB as 📊 Wazuh Dashboard
@@ -186,6 +186,11 @@ flowchart TD
     Failover --> BackupIP["✅ Backup Node Adopts VIP"]
     HoldVIP --> End["🚀 Service Resilience Maintained"]
     BackupIP --> End
+    
+    subgraph Legend
+        V["VIP: 172.25.0.222 / wazuh.vip"]
+        H["LB: Hardened Nginx"]
+    end
 ```
 
 ### 3.4 Tier 1: The Resilience Layer (Networking & HA)
@@ -262,15 +267,24 @@ This instructs Docker to **not** create a new network stack for them, but instea
 
 ### 5.3 Nginx Configuration Strategy (`nginx_ha.conf`)
 *   **L4 Streaming (TCP/UDP)**:
-    *   For Wazuh Agent traffic (1514), we use **Consistent Hashing** (`hash $remote_addr consistent`). This ensures that a specific agent always reconnects to the same Manager worker unless that worker is down. This is crucial for keeping partial log fragments together.
-*   **L7 Proxying (HTTP)**:
-    *   For the Dashboard, Grafana, and Zabbix UI, Nginx acts as a standard Reverse Proxy.
-    *   **Hardening**:
-        *   **Global Timeouts**: `proxy_connect_timeout`, `proxy_send_timeout`, and `proxy_read_timeout` set to 60s to prevent hanging connections.
-        *   **Health Checks**: Upstreams configured with `max_fails=3 fail_timeout=30s` to intelligently avoid failing backends.
-        *   **Security Headers**: Injected `X-Forwarded-Proto $scheme` for HTTPS redirection and `Upgrade`/`Connection` headers to support WebSockets (crucial for Grafana Live).
+    *   For Wazuh Agent traffic (1514), we use **Consistent Hashing** (`hash $remote_addr consistent`). This ensures that a specific agent always reconnects to the same Manager worker unless that worker is down.
+*   **L7 Proxying & Hardening (HTTP)**:
+    *   For management UIs (Dashboard, Grafana, Zabbix), Nginx provides advanced traffic control:
 
-### 5.4 Keepalived VRRP Logic
+| Hardening Category | Setting | Technical Purpose |
+| :--- | :--- | :--- |
+| **Session Integrity** | `WebSocket Upgrades` | Supports Grafana Live and real-time socket streams. |
+| **Protocol Awareness** | `X-Forwarded-Proto` | Ensures backends correctly handle HTTPS redirection logic. |
+| **Fault Tolerance** | `max_fails=3` | Automatically masks transient backend failures from the user. |
+| **Timeout Resilience** | `proxy_read_timeout 60s` | Prevents hanging UI sockets during heavy indexer query loads. |
+
+### 5.4 Configuration Abstraction: The `wazuh.vip` Pattern
+To eliminate the fragility of hardcoded IPs, we implemented an abstraction layer within the deployment logic.
+*   **The problem**: Hardcoded IPs in container environment variables require global updates if the network fabric changes.
+*   **The Solution**: We utilized `extra_hosts` to map the Keepalived VIP (`172.25.0.222`) to a logical internal hostname: `wazuh.vip`.
+*   **Impact**: Core services now connect to `https://wazuh.vip`, ensuring that infrastructure changes only require a single update at the host mapping level.
+
+### 5.5 Keepalived VRRP Logic
 *   **State Machine**:
     *   Node 1 is `MASTER` (Priority 101).
     *   Node 2 is `BACKUP` (Priority 100).

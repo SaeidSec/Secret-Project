@@ -1,0 +1,543 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\geometry{a4paper, margin=0.6in}
+
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{graphicx}
+
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, calc, shadows.blur, backgrounds, fit, decorations.pathreplacing}
+
+% --- Custom Color Palette (Professional/Enterprise) ---
+\definecolor{soc-blue}{HTML}{1E3A8A}
+\definecolor{soc-green}{HTML}{065F46}
+\definecolor{soc-yellow}{HTML}{B45309}
+\definecolor{soc-red}{HTML}{991B1B}
+\definecolor{soc-gray}{HTML}{374151}
+\definecolor{grid-gray}{HTML}{E5E7EB}
+
+\tikzset{
+    % --- High Fidelity Styles ---
+    boss-base/.style={
+        rectangle,
+        draw=soc-gray,
+        line width=0.5mm,
+        inner sep=8pt,
+        text centered,
+        blur shadow={shadow blur steps=10, shadow blur radius=1.5mm, shadow opacity=40}
+    },
+    boss-service/.style={
+        boss-base,
+        fill=blue!5,
+        draw=soc-blue,
+        font=\bfseries\small\color{soc-blue},
+        rounded corners=2mm,
+        top color=blue!10,
+        bottom color=white
+    },
+    boss-agent/.style={
+        boss-base,
+        fill=green!5,
+        draw=soc-green,
+        font=\bfseries\small\color{soc-green},
+        rounded corners=2mm,
+        top color=green!10,
+        bottom color=white
+    },
+    boss-db/.style={
+        cylinder,
+        boss-base,
+        shape border rotate=90,
+        aspect=0.25,
+        fill=soc-yellow!10,
+        draw=soc-yellow,
+        font=\bfseries\footnotesize\color{soc-yellow},
+        minimum width=1.8cm,
+        minimum height=1.2cm
+    },
+    boss-node/.style={
+        ellipse,
+        boss-base,
+        fill=soc-gray!5,
+        draw=soc-gray,
+        font=\itshape\scriptsize,
+        inner sep=2pt
+    },
+    % --- Grouping/Zone Styles ---
+    zone/.style={
+        rectangle,
+        draw=gray!20,
+        fill=gray!2,
+        dashed,
+        rounded corners=4mm,
+        line width=0.3mm
+    },
+    % --- Connectors ---
+    data-flow/.style={
+        -{Stealth[scale=1.2]},
+        line width=0.6mm,
+        soc-blue!80,
+        shorten >=2pt,
+        shorten <=2pt
+    },
+    alert-flow/.style={
+        -{Stealth[scale=1.2]},
+        line width=0.6mm,
+        soc-red!80,
+        shorten >=2pt,
+        shorten <=2pt
+    }
+}
+
+\hypersetup{colorlinks=true, linkcolor=soc-blue, filecolor=soc-red, urlcolor=soc-green}
+\lstset{
+    basicstyle=\ttfamily\scriptsize,
+    breaklines=true,
+    frame=single,
+    backgroundcolor=\color{gray!5},
+    keywordstyle=\color{soc-blue}
+}
+
+% (Kept for reference; not used on cover page)
+\title{\textbf{\Huge Enterprise-Grade Wazuh SIEM} \\ \vspace{0.5cm} \Large The Ultimate Whitepaper Edition}
+
+\begin{document}
+
+% ======================================================
+% 1) COVER PAGE (FULL PAGE IMAGE) - PAGE 1
+% File name: Enterprise_Grade_Wazuh_SIEM.png
+% ======================================================
+\newgeometry{a4paper, margin=0in} % no margins for cover
+\thispagestyle{empty}
+\noindent\includegraphics[width=\paperwidth,height=\paperheight]{Enterprise_Grade_Wazuh_SIEM.png}
+\clearpage
+\restoregeometry % back to your normal margins (0.6in)
+
+% ======================================================
+% 2) TABLE OF CONTENTS - PAGE 2+
+% ======================================================
+\tableofcontents
+\newpage
+
+% ======================================================
+% 3) MAIN CONTENT
+% ======================================================
+
+\section{Enterprise-Grade Wazuh SIEM: The Ultimate Architecture Guide}
+\subsection{Advanced Load Balancing, High Availability \& Full-Stack Observability}
+
+\textbf{Author:} Abu Saeid \\
+\textbf{Date:} January 24, 2026 \\
+\textbf{Version:} 3.0.0 (Ultimate Whitepaper Edition) \\
+\textbf{Classification:} Enterprise Technical Manual \\
+\textbf{Repository:} 
+\href{https://github.com/SaeidSec/Docker-base-Enterprise-Grade-Wazuh-SIEM-Advanced-Load-Balancing-and-High-Availability-Architecture}{GitHub} \\
+
+\vspace{0.4cm}
+\rule{\textwidth}{0.4pt}
+\vspace{0.4cm}
+
+\begin{center}
+\textit{
+This whitepaper is dedicated to my wife, \\
+whose unwavering support, patience, and belief \\
+made this work possible.
+}
+\end{center}
+
+\vspace{0.4cm}
+\rule{\textwidth}{0.4pt}
+\vspace{0.6cm}
+
+
+\section{Table of Contents}
+\begin{enumerate}
+\item \href{\#1-executive-summary}{Executive Summary}
+\item \href{\#2-architectural-philosophy--design-principles}{Architectural Philosophy \& Design Principles}
+\item \href{\#3-comprehensive-system-architecture}{Comprehensive System Architecture}
+\item \href{\#4-core-component-analysis-the-wazuh-engine}{Core Component Analysis: The Wazuh Engine}
+\item \href{\#5-the-network-decoupled-high-availability-engine}{The "Network-Decoupled" High Availability Engine}
+\item \href{\#6-full-stack-observability-ecosystem}{Full-Stack Observability Ecosystem}
+\item \href{\#7-advanced-log-management--routing-strategies}{Advanced Log Management \& Routing Strategies}
+\item \href{\#8-offensive-defense-the-honeypot-ecosystem}{Offensive Defense: The Honeypot Ecosystem}
+\item \href{\#9-automated-vulnerability-management-strategy}{Automated Vulnerability Management Strategy}
+\item \href{\#10-operational-manual-deployment--maintenance}{Operational Manual: Deployment \& Maintenance}
+\item \href{\#11-strategic-advantages--future-roadmap}{Strategic Advantages \& Future Roadmap}
+\item \href{\#12-conclusion}{Conclusion}
+\end{enumerate}
+
+--- \\
+\newpage
+
+\subsection{1. Executive Summary}
+
+In the modern cybersecurity landscape, a Security Information and Event Management (SIEM) system is the heartbeat of the Security Operations Center (SOC). However, traditional "out-of-the-box" containerized deployments of SIEM platforms often fail to meet enterprise requirements for \textbf{persistence}, \textbf{resilience}, and \textbf{observability}. \\
+
+This document details the engineering of a production-ready \textbf{Wazuh SIEM} architecture that transcends these limitations. By wrapping the core Wazuh engine in a sophisticated infrastructure layer, we have created a system that is: \\
+\begin{itemize}
+\item   \textbf{Self-Healing}: Capable of recovering from load balancer failures in milliseconds without dropping connections.
+\item   \textbf{Fully Observable}: Monitored by a dedicated compliance layer (Zabbix) that watches the watchers.
+\item   \textbf{Proactively Defensible}: Integrated with AI-driven honeypots and automated vulnerability scanners to detect threats before they breach the perimeter.
+\end{itemize}
+
+This is not just a logging server; it is a \textbf{cyber-resilience platform}. \\
+
+--- \\
+
+\subsection{2. Architectural Philosophy \& Design Principles}
+
+The design of this system was driven by four non-negotiable engineering principles necessary for "Enterprise-Grade" status. \\
+
+\subsubsection{2.1 Principle of Persistence (The "Pause" Pattern)}
+In a containerized environment, network namespaces are typically ephemeral—tied to the lifecycle of the application container. This is unacceptable for a Load Balancer holding a Virtual IP (VIP). \\
+\begin{itemize}
+\item   \textbf{Our Solution}: We adopted the \textbf{Kubernetes Pod Model} within Docker Compose. We decouple the \textit{network infrastructure} from the \textit{application logic}. A dedicated, immutable "Pause Container" (\texttt{lb-node}) holds the network namespace/IP, while the application (Nginx) merely attaches to it. This allows the application to restart, crash, or upgrade without ever destroying the underlying network stack.
+\end{itemize}
+
+\subsubsection{2.2 Principle of "Watching the Watchers"}
+A SIEM watches your infrastructure, but who watches the SIEM? If the SIEM's disk fills up or its API crashes, you are flying blind. \\
+\begin{itemize}
+\item   \textbf{Our Solution}: A dedicated \textbf{Zabbix Observability Layer}. Every single container in this stack has a "sidecar" Zabbix agent. This provides an external, independent verification of the SIEM's health, alerting on CPU spikes, buffer overflows, or database connectivity issues.
+\end{itemize}
+
+\subsubsection{2.3 Principle of Unified Visibility}
+Security analysts should not have to toggle between five different screens to understand the state of the environment. \\
+\begin{itemize}
+\item   \textbf{Our Solution}: A unified \textbf{Grafana Dashboarding Layer} that aggregates:
+\item   \textbf{Security Alerts} (from Wazuh/OpenSearch)
+\item   \textbf{Infrastructure Health} (from Zabbix)
+\item   \textbf{Performance Metrics} (from Prometheus)
+\end{itemize}
+    This "Single Pane of Glass" allows for the correlation of system performance with security events (e.g., "Is that CPU spike a DDoS attack?"). \\
+
+\subsubsection{2.4 Principle of Active Defense}
+Passive logging is insufficient. An enterprise system must actively detect reconnaissance. \\
+\begin{itemize}
+\item   \textbf{Our Solution}: Integrated \textbf{Honeypots (Beelzebub \& Cowrie)} that act as "canaries in the coal mine," detecting malicious intent at the perimeter before it touches critical assets.
+\end{itemize}
+
+--- \\
+
+\subsection{3. Comprehensive System Architecture}
+
+The system is built as a highly coupled microservices mesh consisting of \textbf{32+ Docker containers}, organized into logical tiers. \\
+
+\subsubsection{3.1 System Architecture Diagram}
+The architecture is structured into logical layers, ensuring separation of concerns and clear data flow. \\
+
+\begin{figure}[ht!]
+    \centering
+    \includegraphics[width=0.9\textwidth]{Wazuh_SIEM_High_Availability_Architecture.png}
+    \caption{Wazuh SIEM High Availability Architecture}
+    \label{fig:wazuh-ha-architecture}
+\end{figure}
+
+\subsubsection{3.2 System Sequence Diagram: Security Event Lifecycle}
+This diagram illustrates the flow of a security event from an external agent to the final visualization. \\
+
+\begin{figure}[ht!]
+    \centering
+    \includegraphics[width=0.9\textwidth]{Wazuh_Security_Event_Lifecycle.png}
+    \caption{Wazuh Security Event Lifecycle Sequence}
+    \label{fig:wazuh-event-lifecycle}
+\end{figure}
+
+\newpage
+\subsubsection{3.3 Workflow Diagram: Automated Failover \& Recovery}
+This workflow shows the resilience mechanism providing zero-downtime during a maintenance event or crash. \\
+
+\begin{figure}[ht!]
+    \centering
+    \includegraphics[width=0.9\textwidth]{Wazuh_HA_Failover_Workflow.png}
+    \caption{Enterprise Resiliency and High Availability Failover Workflow in Wazuh}
+    \label{fig:wazuh-ha-failover}
+\end{figure}
+
+\subsubsection{3.4 Tier 1: The Resilience Layer (Networking \& HA)}
+\begin{itemize}
+\item   \textbf{Virtual IP (VIP)}: \texttt{172.25.0.222} (Aliased as \texttt{wazuh.vip} internally for decoupling).
+\item   \textbf{Protocol}: VRRP (Virtual Router Redundancy Protocol) via Keepalived.
+\item   \textbf{Load Balancers}: 2x Nginx nodes in Active/Passive configuration.
+\item   \textbf{Infrastructure Nodes}: 2x Alpine "Anchor" nodes holding the network namespaces.
+\end{itemize}
+
+\subsubsection{3.2 Tier 2: The Control Plane (Wazuh Core)}
+\begin{itemize}
+\item   \textbf{Master Node}: \texttt{wazuh.master} - Handles API requests, cluster coordination, and agent enrollment (\texttt{tcp/1515}).
+\item   \textbf{Worker Node}: \texttt{wazuh.worker} - Dedicated to event decoding, rule matching, and log ingestion to offload the Master.
+\item   \textbf{Communication}: Nodes sync via port \texttt{1516} using a pre-shared cluster key.
+\end{itemize}
+
+\subsubsection{3.3 Tier 3: The Data Plane (Storage)}
+\begin{itemize}
+\item   \textbf{Indexer Cluster}: 3x \texttt{wazuh-indexer} nodes (OpenSearch) forming a quorum-based storage cluster.
+\item   \textbf{Databases}:
+\item   \textbf{PostgreSQL}: For Zabbix structural data.
+\item   \textbf{MongoDB}: For Graylog metadata.
+\item   \textbf{Prometheus TSDB}: For high-volume time-series metrics.
+\end{itemize}
+
+\subsubsection{3.4 Tier 4: The Observability Plane}
+\begin{itemize}
+\item   \textbf{Monitoring Server}: Zabbix Server 7.0.
+\item   \textbf{Metric Collectors}: 13x Zabbix Agents, 2x Telegraf Agents, cAdvisor, Node Exporter.
+\item   \textbf{Visualization}: Grafana \& Zabbix Web.
+\end{itemize}
+
+\subsubsection{3.5 Tier 5: The Threat Intel Plane}
+\begin{itemize}
+\item   \textbf{Internal Scanners}: Trivy (scanning the Docker socket).
+\item   \textbf{External Traps}: Beelzebub (ssh/http) and Cowrie (ssh/telnet).
+\end{itemize}
+
+--- \\
+
+\subsection{4. Core Component Analysis: The Wazuh Engine}
+
+\subsubsection{4.1 Wazuh Managers (Master \& Cluster)}
+\begin{itemize}
+\item   \textbf{Image}: \texttt{wazuh/wazuh-manager:4.14.1}
+\item   \textbf{Role Setup}:
+\item   The \textbf{Master} is configured via \texttt{cluster.node\_{}type=master}. It holds the authoritative copy of the client keys and ruleset.
+\item   The \textbf{Worker} is configured via \texttt{cluster.node\_{}type=worker}. It connects to the master to sync configuration but processes agent data independently.
+\item   \textbf{SSL Integration}:
+\item   The Managers use \textbf{Filebeat} (embedded) to ship logs to the Indexer Cluster.
+\item   \textbf{Security}: Full SSL output verification is enabled (\texttt{FILEBEAT\_{}SSL\_{}VERIFICATION\_{}MODE=full}). Certificates are mounted from \texttt{./config/wazuh\_{}indexer\_{}ssl\_{}certs}.
+\end{itemize}
+
+\subsubsection{4.2 Wazuh Indexers (OpenSearch)}
+\begin{itemize}
+\item   \textbf{Image}: \texttt{wazuh/wazuh-indexer:4.14.1}
+\item   \textbf{Cluster Logic}:
+\item   \textbf{Bootstrap Checks}: Enforced. Memory lock (\texttt{bootstrap.memory\_{}lock=true}) is enabled to prevent swapping, which is fatal for Lucene performance.
+\item   \textbf{JVM Heap}: Pinned at 1GB (\texttt{-Xms1g -Xmx1g}) per node. In production, this should be 50\% of available RAM.
+\item   \textbf{Discovery}: The 3 nodes (\texttt{wazuh1}, \texttt{wazuh2}, \texttt{wazuh3}) form a mesh. \texttt{wazuh1} is the initial master-eligible node.
+\end{itemize}
+
+\subsubsection{4.3 Wazuh Dashboard}
+\begin{itemize}
+\item   \textbf{Image}: \texttt{wazuh/wazuh-dashboard:4.14.1}
+\item   \textbf{Connectivity}: Connects to the Indexer Cluster via HTTPS/9200.
+\item   \textbf{API Access}: Connects to the Wazuh Master API via the Load Balancer VIP (\texttt{https://172.25.0.222}) to perform agent management actions from the UI.
+\end{itemize}
+
+--- \\
+
+\subsection{5. The "Network-Decoupled" High Availability Engine}
+
+This section details the custom engineering that makes this system uniquely resilient. \\
+
+\subsubsection{5.1 The "Pause Container" Mechanics}
+Standard Docker containers bind the network namespace to the PID 1 of the container. If that process dies (Nginx crash or restart), the namespace is garbage collected by the kernel. \\
+\begin{itemize}
+\item   \textbf{Our Innovation}: We introduce \texttt{lb-node-1} and \texttt{lb-node-2}.
+\item   \textbf{Image}: \texttt{alpine:latest}
+\item   \textbf{Command}: \texttt{tail -f /dev/null} (An infinite, low-resource loop).
+\item   \textbf{Function}: This container creates the network interfaces (\texttt{eth0}, \texttt{lo}) and exposes the ports (\texttt{443}, \texttt{1514}, \texttt{55000}, etc.) to the host.
+\end{itemize}
+
+\subsubsection{5.2 Service Attachment}
+The functional containers (\texttt{nginx-lb} and \texttt{keepalived}) are deployed with: \\
+\begin{lstlisting}
+network_mode: "service:lb-node-1"
+\end{lstlisting}
+This instructs Docker to \textbf{not} create a new network stack for them, but instead to join the existing namespace of the \texttt{lb-node}. They see \texttt{localhost} as the same interface. They share the same IP. \\
+
+\subsubsection{5.3 Nginx Configuration Strategy (`nginx\_{}ha.conf`)}
+\begin{itemize}
+    \item   \textbf{L4 Streaming (TCP/UDP)}:
+    \item   For Wazuh Agent traffic (1514), we use \textbf{Consistent Hashing} (\texttt{hash \$remote\_{}addr consistent}). This ensures that a specific agent always reconnects to the same Manager worker unless that worker is down.
+    \item   \textbf{L7 Proxying \& Hardening (HTTP)}:
+    \item   For management UIs (Dashboard, Grafana, Zabbix), Nginx provides advanced traffic control:
+    \begin{longtable}{@{}llp{8cm}@{}}
+        \toprule
+        \textbf{Hardening Category} & \textbf{Setting} & \textbf{Technical Purpose} \\
+        \midrule
+        \textbf{Session Integrity} & \texttt{WebSocket Upgrades} & Supports Grafana Live and real-time socket streams. \\
+        \textbf{Protocol Awareness} & \texttt{X-Forwarded-Proto} & Ensures backends correctly handle HTTPS redirection logic. \\
+        \textbf{Fault Tolerance} & \texttt{max\_{}fails=3} & Automatically masks transient backend failures from the user. \\
+        \textbf{Timeout Resilience} & \texttt{proxy\_{}read\_{}timeout 60s} & Prevents hanging UI sockets during heavy indexer query loads. \\
+        \bottomrule
+    \end{longtable}
+\end{itemize}
+
+\subsubsection{5.4 Configuration Abstraction: The \texttt{wazuh.vip} Pattern}
+To eliminate the fragility of hardcoded IPs, we implemented an abstraction layer within the deployment logic.
+\begin{itemize}
+    \item   \textbf{The problem}: Hardcoded IPs in container environment variables require global updates if the network fabric changes.
+    \item   \textbf{The Solution}: We utilized \texttt{extra\_{}hosts} to map the Keepalived VIP (\texttt{172.25.0.222}) to a logical internal hostname: \texttt{wazuh.vip}.
+    \item   \textbf{Impact}: Core services now connect to \texttt{https://wazuh.vip}, ensuring that infrastructure changes only require a single update at the host mapping level, following the Principle of Least Knowledge (PoLK).
+\end{itemize}
+
+\subsubsection{5.5 Keepalived VRRP Logic}
+\begin{itemize}
+\item   \textbf{State Machine}:
+\item   Node 1 is \texttt{MASTER} (Priority 101).
+\item   Node 2 is \texttt{BACKUP} (Priority 100).
+\item   \textbf{Health Check Script}: A lightweight script curls \texttt{http://localhost:81/nginx\_{}status} every 3 seconds.
+\item   If Nginx responds, weight remains +0.
+\item   If Nginx fails, priority is decremented by 20 (Result: 81), prompting the Backup node (Priority 100) to preemptively take over the VIP.
+\end{itemize}
+
+--- \\
+
+\subsection{6. Full-Stack Observability Ecosystem}
+
+\subsubsection{6.1 Zabbix Architecture (Active Monitoring)}
+The Zabbix implementation here is massive. \\
+\begin{itemize}
+\item   \textbf{Zabbix Server}: The brain, processing metrics from 13 active agents.
+\item   \textbf{Agents}: Deployed in \texttt{privileged: true} mode alongside key components.
+\item   \textbf{Key Metrics Monitored}:
+\item   \textbf{Wazuh Queues}: Monitoring \texttt{/var/ossec/var/run/ossec-queue} to detect log congestion.
+\item   \textbf{Disk Usage}: Vital for the Indexer nodes (OpenSearch stops writing at 95\% disk usage).
+\item   \textbf{Database Connectivity}: Checks if PostgreSQL and MongoDB are accepting connections.
+\item   \textbf{Process State}: "Is \texttt{wazuh-remoted} running?"
+\end{itemize}
+
+\subsubsection{6.2 Prometheus \& Telegraf (Performance Metrics)}
+\begin{itemize}
+\item   \textbf{Telegraf Sidecar}: Runs attached to the \texttt{lb-node}. It reads Nginx's \texttt{stub\_{}status} module to report:
+\item   Active connections.
+\item   Requests per second.
+\item   Handing/Writing states.
+\item   \textbf{Prometheus}: Scrapes Telegraf and cAdvisor. It maintains a 200-hour retention history (\texttt{--storage.tsdb.retention.time=200h}), allowing for trend analysis (e.g., "Are we receiving more logs on Mondays?").
+\end{itemize}
+
+\subsubsection{6.3 Grafana (Unified Visualization)}
+Grafana sits on top of this, connected to: \\
+\begin{enumerate}
+\item \textbf{OpenSearch}: For visualizing security alerts (Wazuh data).
+\item \textbf{Zabbix}: For visualizing infrastructure up/down states.
+\item \textbf{Prometheus}: For detailed time-series performance graphs.
+\end{enumerate}
+
+--- \\
+
+\subsection{7. Advanced Log Management \& Routing Strategies}
+
+\subsubsection{7.1 Graylog 7.0 Deployment}
+While Wazuh is excellent for security, it is expensive to index \textit{everything} into it. Graylog provides a tiered log management strategy. \\
+\begin{itemize}
+\item   \textbf{Integration}: Wazuh Managers are configured to forward alerts via Syslog (JSON format) to Graylog on port \texttt{1515}.
+\item   \textbf{Use Case}: Graylog serves as a "Data Lake" for long-term retention or for routing logs to other systems (e.g., archival storage) without burdening the high-performance Wazuh Indexers.
+\end{itemize}
+
+\subsubsection{7.2 Filebeat Integration}
+Inside the Wazuh Managers, Filebeat is the transport mechanism. \\
+\begin{itemize}
+\item   \textbf{Config}: It reads \texttt{/var/ossec/logs/alerts/alerts.json}.
+\item   \textbf{Output}: Compressed HTTPS stream to the Indexer Cluster (\texttt{https://wazuh\{1,2,3\}.indexer:9200}).
+\item   \textbf{Resilience}: Filebeat ensures "at-least-once" delivery. If Indexers are down, it buffers logs on disk until connectivity is restored.
+\end{itemize}
+
+--- \\
+
+\subsection{8. Offensive Defense: The Honeypot Ecosystem}
+
+This architecture turns the table on attackers by deploying decoys. \\
+
+\subsubsection{8.1 Beelzebub (AI Honeypot)}
+\begin{itemize}
+\item   \textbf{Technology}: Go-based, AI-driven low-medium interaction.
+\item   \textbf{Simulation}: Exposes a fake SSH service on port \texttt{2222} and a fake WordPress site on \texttt{8000}.
+\item   \textbf{AI Logic}: Uses a GPT-like model to generate realistic command responses, tricking automated bots into thinking they have successfully breached a system, keeping them engaged while logging their TTPs (Tactics, Techniques, and Procedures).
+\item   \textbf{Log Flow}: JSON logs are written to a shared volume mapped to the Wazuh Manager. Wazuh uses a \texttt{<localfile>} block to tail these logs and generate specific alerts ("Honeypot Triggered: SSH Brute Force").
+\end{itemize}
+
+\subsubsection{8.2 Cowrie (Interaction Trap)}
+\begin{itemize}
+\item   \textbf{Technology}: Python-based high-interaction SSH/Telnet proxy.
+\item   \textbf{Function}: It mimics a UNIX filesystem. Attackers can \texttt{wget} malware, \texttt{cd} into directories, and run commands.
+\item   \textbf{Forensics}: Cowrie captures the actual binaries downloaded by attackers. These are stored in \texttt{cowrie-var} for malware analysis by the SOC team.
+\end{itemize}
+
+--- \\
+
+\subsection{9. Automated Vulnerability Management Strategy}
+
+\subsubsection{9.1 Trivy Integration Model}
+Instead of relying solely on Wazuh's "Vulnerability Detector" (which checks installed packages against CVE databases), we integrate \textbf{Trivy} for active container scanning. \\
+
+\subsubsection{9.2 The Scanner Script (`trivy\_{}scan.sh`)}
+This custom script is the bridge between Trivy and Wazuh. \\
+\begin{enumerate}
+\item \textbf{Execution}: Runs every 3 days via Wazuh's Command Module.
+\item \textbf{Access}: Mounts \texttt{/var/run/docker.sock} (Read-only) to see all containers on the host.
+\item \textbf{Scan Logic}:
+\end{enumerate}
+\begin{itemize}
+\item   Iterates through every running container image.
+\item   Executes \texttt{trivy image} with a custom output format.
+\item   Injects a \texttt{Trivy:} header into the output.
+\end{itemize}
+\begin{enumerate}
+\item \textbf{Ingestion}: Wazuh Manager captures the \texttt{stdout} of this script.
+\item \textbf{Decoding}: A custom decoder matches the \texttt{Trivy:} header and extracts fields like \texttt{Package}, \texttt{Severity}, \texttt{CVE-ID}.
+\item \textbf{Alerting}: Rules trigger alerts based on severity (e.g., "Critical Vulnerability found in Nginx Image").
+\end{enumerate}
+
+--- \\
+
+\subsection{10. Operational Manual: Deployment \& Maintenance}
+
+\subsubsection{10.1 Pre-Flight Check}
+Before deployment, the host must be prepared: \\
+\begin{enumerate}
+\item \textbf{Kernel Tuning}: \texttt{vm.max\_{}map\_{}count} must be set to \texttt{262144} (required for OpenSearch mmapfs).
+\item \textbf{Resources}: Ensure at least 16GB RAM is available.
+\item \textbf{Ports}: Ensure ports 443, 1514, 1515, 55000, 80, 2222, 2223 are free.
+\end{enumerate}
+
+\subsubsection{10.2 Deployment Sequence (Critical Order)}
+\begin{enumerate}
+\item \textbf{Certificates}: Run \texttt{docker-compose -f generate-indexer-certs.yml run --rm generator} to create the SSL chain of trust.
+\item \textbf{Network}: \texttt{docker network create wazuh-net}.
+\item \textbf{Storage}: \texttt{docker-compose up -d wazuh1.indexer wazuh2.indexer wazuh3.indexer wazuh4.indexer}. \textit{Wait for green health.}
+\item \textbf{Core}: \texttt{docker-compose up -d wazuh.master wazuh.worker wazuh.dashboard}.
+\item \textbf{Infrastructure}: \texttt{docker-compose up -d lb-node-1 lb-node-2 nginx-lb-1 nginx-lb-2 keepalived-1 keepalived-2}.
+\item \textbf{Observability}: \texttt{docker-compose up -d zabbix-postgres zabbix-server grafana prometheus}.
+\end{enumerate}
+
+\subsubsection{10.3 Scaling the Cluster}
+\begin{itemize}
+\item   \textbf{Adding Indexers}: Simply duplicate the \texttt{wazuh3.indexer} service definition, update the certificate generation \texttt{instances.yml}, and add the new node to \texttt{nginx\_{}ha.conf}.
+\item   \textbf{Adding Workers}: Duplicate \texttt{wazuh.worker}, ensuring it shares the same \texttt{INDEXER\_{}URL} and \texttt{cluster.key}.
+\end{itemize}
+
+--- \\
+
+\subsection{11. Strategic Advantages \& Future Roadmap}
+
+\subsubsection{11.1 Strategic Advantages}
+\begin{itemize}
+\item   \textbf{Resilience}: The architecture can suffer the loss of any single node (Indexer, Manager, LB, HA) and continue processing security events.
+\item   \textbf{Cost Efficiency}: By using Open Source components (Wazuh, Zabbix, Graylog) instead of commercial alternatives (Splunk, Datadog), licensing costs are zero.
+\item   \textbf{Compliance Ready}: The archival capabilities of Graylog + the integrity monitoring (FIM) of Wazuh meet strict PCI-DSS and HIPAA log retention requirements.
+\end{itemize}
+
+\subsubsection{11.2 Future Roadmap}
+\begin{itemize}
+\item   \textbf{Kubernetes Migration}: The "Pod-like" structure of the Docker Compose file is deliberately designed to make migration to Helm charts seamless.
+\item   \textbf{SOAR Automation}: Future integration with \textbf{Shuffle} or \textbf{n8n} to automatically block IPs on the firewall when a honeypot is triggered.
+\item   \textbf{AI Analysis}: Implementing local LLMs (like Ollama) to parse unstructured logs and provide natural language summaries of incidents.
+\end{itemize}
+
+--- \\
+
+\subsection{12. Conclusion}
+
+The \textbf{Enterprise-Grade Wazuh SIEM} architecture described herein is a testament to modern security engineering. It rejects the fragility of simple deployments in favor of a robust, layered, and observable fortress. \\
+
+By treating the Security Infrastructure with the same rigor as mission-critical application infrastructure—implementing High Availability, detailed monitoring, and failover logic—we ensure that the organization's "Digital Eyes" are always open, always watching, and always ready to respond. This is the definition of \textbf{Cyber Resilience}. \\
+
+--- \\
+\textbf{End of Ultimate Documentation} \\
+
+\end{document}
