@@ -423,6 +423,24 @@ The \texttt{docker-compose.yml} was optimized to eliminate hardcoded dependencie
     \item \textbf{Host-Level Decoupling}: Utilized \texttt{extra\_hosts} to map \texttt{wazuh.vip} to the actual VIP at the container level. Infrastructure network changes now require zero modifications to critical service environment variables.
 \end{itemize}
 
+\subsection{6.3 Phase 3: Resilience Optimization \& Agent Key Persistence}
+During aggressive high-availability testing, it was observed that rapid failover events could cause Wazuh agents to lose synchronization with the manager, leading to "Duplicate Agent Name" errors and connection flapping.
+
+\subsubsection{Solution 1: Forced Agent Re-registration}
+To ensure that agents can always recover their connection even if local keys become desynchronized during a failover, the Wazuh Manager's \texttt{auth} configuration was optimized:
+\begin{itemize}
+    \item \textbf{\texttt{force\_insert}}: Enabled to allow the manager to overwrite existing agent records with the same name if a new registration request is received.
+    \item \textbf{\texttt{force\_time}}: Set to \texttt{0} to allow immediate re-registration without a timeout penalty.
+\end{itemize}
+This ensures that the "Duplicate Name" error never blocks a legitimate agent from re-joining the cluster.
+
+\subsubsection{Solution 2: Persistent TCP Session Tuning}
+In the Nginx Stream blocks, the connection lifecycle was hardened for high-latency or transient failover scenarios:
+\begin{itemize}
+    \item \textbf{\texttt{proxy\_timeout 300s}}: Increased from the default to ensure that long-lived agent TCP connections are not prematurely terminated by the load balancer during a manager election or container restart.
+\end{itemize}
+This provides a "warm" buffer that allows the cluster components to recover before the network layer drops the session.
+
 --- \\
 
 \section{7. Full-Stack Observability Ecosystem}

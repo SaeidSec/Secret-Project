@@ -321,6 +321,20 @@ The `docker-compose.yml` was optimized to eliminate hardcoded dependencies:
 *   **VIP Aliasing**: Replaced the hardcoded `172.25.0.222` with a logical internal alias, **`wazuh.vip`**.
 *   **Host-Level Decoupling**: Utilized `extra_hosts` to map `wazuh.vip` to the actual VIP at the container level. Infrastructure network changes now require zero modifications to critical service environment variables.
 
+## 6.3 Phase 3: Resilience Optimization & Agent Key Persistence
+During aggressive high-availability testing, it was observed that rapid failover events could cause Wazuh agents to lose synchronization with the manager, leading to "Duplicate Agent Name" errors and connection flapping.
+
+### Solution 1: Forced Agent Re-registration
+To ensure that agents can always recover their connection even if local keys become desynchronized during a failover, the Wazuh Manager's `auth` configuration was optimized:
+*   **`force_insert`**: Enabled to allow the manager to overwrite existing agent records with the same name if a new registration request is received.
+*   **`force_time`**: Set to `0` to allow immediate re-registration without a timeout penalty.
+This ensures that the "Duplicate Name" error never blocks a legitimate agent from re-joining the cluster.
+
+### Solution 2: Persistent TCP Session Tuning
+In the Nginx Stream blocks, the connection lifecycle was hardened for high-latency or transient failover scenarios:
+*   **`proxy_timeout 300s`**: Increased from the default to ensure that long-lived agent TCP connections are not prematurely terminated by the load balancer during a manager election or container restart.
+This provides a "warm" buffer that allows the cluster components to recover before the network layer drops the session.
+
 ---
 
 # 7. Full-Stack Observability Ecosystem
