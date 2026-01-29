@@ -12,15 +12,41 @@ NC='\033[0m' # No Color
 
 echo -e "${GREEN}🔍 Starting Universal Wazuh Fixer...${NC}"
 
-# 1. Path Safety
+# 1. Path Safety and Root Check
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-# 2. Stop services
+if [[ $EUID -ne 0 ]]; then
+   echo -e "${RED}❌ Warning: This script needs to check system settings and manage Docker.${NC}"
+   echo "Please run with: sudo bash bootstrap.sh"
+   exit 1
+fi
+
+# 2. System Settings Check (vm.max_map_count)
+echo -e "${BLUE}⚙️ Checking System Settings...${NC}"
+VMM_COUNT=$(sysctl -n vm.max_map_count)
+if [ "$VMM_COUNT" -lt 262144 ]; then
+    echo "🔧 Increasing vm.max_map_count to 262144..."
+    sysctl -w vm.max_map_count=262144
+    echo "vm.max_map_count=262144" | tee -a /etc/sysctl.conf
+else
+    echo "✅ vm.max_map_count is already sufficient ($VMM_COUNT)"
+fi
+
+# 3. Environment File Preparation
+if [ ! -f ".env" ]; then
+    echo "📄 Creating .env file from .env.example..."
+    cp .env.example .env
+    echo "✅ .env file created. Please update it if you need custom passwords."
+else
+    echo "✅ .env file already exists."
+fi
+
+# 4. Stop services
 echo -e "${BLUE}🛑 Stopping services and cleaning up...${NC}"
 docker compose down --remove-orphans > /dev/null 2>&1 || true
 
-# 3. Fix "Not a Directory" Mount Issues
+# 5. Fix "Not a Directory" Mount Issues
 echo -e "${BLUE}🔧 Cleaning invalid bind-mount folders...${NC}"
 CERT_DIR="config/wazuh_indexer_ssl_certs"
 if [ -d "$CERT_DIR" ]; then
@@ -31,15 +57,15 @@ else
     mkdir -p "$CERT_DIR"
 fi
 
-# 4. Generate Certificates
+# 6. Generate Certificates
 echo -e "${BLUE}🔐 Generating SSL Certificates...${NC}"
 docker compose -f generate-indexer-certs.yml run --rm generator
 
-# 5. Start the Stack
+# 7. Start the Stack
 echo -e "${BLUE}🚀 Starting Wazuh Stack...${NC}"
 docker compose up -d
 
-# 6. Wait for Indexer & Load Template
+# 8. Wait for Indexer & Load Template
 echo -e "${BLUE}⏳ Waiting for Wazuh Indexer to be healthy (this takes 1-2 minutes)...${NC}"
 MAX_RETRIES=30
 RETRY_COUNT=0

@@ -1,58 +1,36 @@
-# Wazuh containers for Docker
+# 🛡️ Enterprise-Grade Wazuh SIEM - Advanced Docker Stack
 
-[![Slack](https://img.shields.io/badge/slack-join-blue.svg)](https://wazuh.com/community/join-us-on-slack/)
-[![Email](https://img.shields.io/badge/email-join-blue.svg)](https://groups.google.com/forum/#!forum/wazuh)
+> **The most stable and feature-rich Wazuh SIEM deployment with High Availability, Monitoring, and Active Defense.**
 
-## Description
+This repository provides a production-hardened, multi-node Wazuh SIEM orchestration using Docker. It goes beyond the standard Wazuh deployment by integrating enterprise monitoring, redundancy, and automated security sensors.
 
-The `wazuh/wazuh-docker` repository provides resources to deploy the Wazuh cybersecurity platform using Docker containers. This setup enables easy installation and orchestration of the full Wazuh stack, including the Wazuh server, dashboard (based on OpenSearch Dashboards), and OpenSearch for indexing and search.
+## 🌟 Key Capabilities
 
-## Capabilities
+- ✅ **High Availability**: Dual Nginx Load Balancers with Keepalived VRRP failover.
+- ✅ **Multi-Node Cluster**: 3-node Wazuh Indexer (OpenSearch) cluster and Master/Worker architecture.
+- ✅ **Universal Bootstrap**: One script to fix common Docker mount, SSL, and Indexer errors on any device.
+- ✅ **Advanced Monitoring**: Full stack monitoring with Zabbix and Grafana.
+- ✅ **Active Defense**: Integrated Beelzebub (AI-powered) and Cowrie honeypots for threat intel.
+- ✅ **Log Management**: Graylog 7.0 for advanced log parsing and storage.
 
-- Full deployment of the Wazuh stack using Docker.
-- `docker compose` support for orchestration.
-- Scalable architecture with multi-node support.
-- Data persistence through configurable volumes.
-- Ready-to-use configurations for production or testing environments.
+## 🚀 One-Command Installation (Fast Install)
 
-## Branch Convention
+To install this project perfectly on any Linux device (Ubuntu/CentOS/Debian):
 
-- `main`: Developing and testing of new features.
-- `X.Y.Z`: Version-specific branches (e.g., `4.14.1`, `4.13.0`, etc.).
+```bash
+git clone https://github.com/SaeidSec/Docker-base-Enterprise-Grade-Wazuh-SIEM-Advanced-Load-Balancing-and-High-Availability-Architecture.git
+cd Docker-base-Enterprise-Grade-Wazuh-SIEM-Advanced-Load-Balancing-and-High-Availability-Architecture/multi-node
+sudo bash bootstrap.sh
+```
 
-## Documentation
+The script will automatically handle system tuning, certificate generation, and even fix common dashboard errors.
 
-Official documentation is available at:
+## 📊 Quick Links
 
-[https://documentation.wazuh.com/current/deployment-options/docker/index.html](https://documentation.wazuh.com/current/deployment-options/docker/index.html)
+- [🏗️ Multi-Node Details](multi-node/README.md)
+- [📘 Full Deployment Guide](multi-node/DEPLOYMENT_GUIDE.md)
+- [🏗️ HA Resilience Report](multi-node/HA_ARCHITECTURE_RESILIENCE_REPORT.md)
 
-You can also explore internal documentation in the [`docs`](https://github.com/wazuh/wazuh-docker/tree/main/docs) folder of this repository.
-
-## Get Involved
-
-- **Fork the repository** and create your own branches to add features or fix bugs.
-- **Open issues** to report bugs or request features.
-- **Submit pull requests** following the contributing guidelines.
-- Participate in [discussions](https://github.com/wazuh/wazuh-docker/discussions) if available.
-
-## Authors / Maintainers
-
-These Docker containers are based on:
-
-*  "deviantony" dockerfiles which can be found at [https://github.com/deviantony/docker-elk](https://github.com/deviantony/docker-elk)
-*  "xetus-oss" dockerfiles, which can be found at [https://github.com/xetus-oss/docker-ossec-server](https://github.com/xetus-oss/docker-ossec-server)
-
-This project is maintained by the [Wazuh](https://wazuh.com) team, with active contributions from the community.
-
-See the full list of contributors at:
-[https://github.com/wazuh/wazuh-docker/graphs/contributors](https://github.com/wazuh/wazuh-docker/graphs/contributors)
-
-We thank them and everyone else who has contributed to this project.
-
-## License and copyright
-
-Wazuh Docker Copyright (C) 2017, Wazuh Inc. (License GPLv2)
-
-## Web references
-
-[Wazuh website](http://wazuh.com)
+---
+**Maintained by**: [SaeidSec](https://github.com/SaeidSec)
+**License**: GPLv2

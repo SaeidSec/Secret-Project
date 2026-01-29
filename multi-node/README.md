@@ -42,19 +42,30 @@ This deployment includes:
 - Cowrie Honeypot (SSH/Telnet Interaction)
 - Integrated Zabbix Agents (Health & Traffic Monitoring)
 
-## 🚀 Quick Start
+## 🚀 Quick Start (Fast Install)
 
-### 1. Generate Certificates
-
-```bash
-docker compose -f generate-indexer-certs.yml run --rm generator
-```
-
-### 2. Deploy the Stack
+To deploy the entire stack perfectly in **one command**, run the bootstrap script from the `multi-node` directory:
 
 ```bash
-docker compose up -d
+sudo bash bootstrap.sh
 ```
+
+**The script handles everything:**
+- ✅ System tuning (`vm.max_map_count`)
+- ✅ SSL Certificate generation
+- ✅ Docker volume/mount cleanup
+- ✅ Automatic Wazuh Index Template upload
+
+### Standard Deployment (Manual)
+
+If you prefer manual control:
+
+1. **Clean invalid mounts (optional but recommended)**:
+   `rm -rf config/wazuh_indexer_ssl_certs/*.pem`
+2. **Generate Certificates**:
+   `docker compose -f generate-indexer-certs.yml run --rm generator`
+3. **Start the Stack**:
+   `docker compose up -d`
 
 ### 3. Access Services
 
