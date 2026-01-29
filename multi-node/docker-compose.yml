@@ -218,7 +218,7 @@ services:
   # ============================================================================
   # HA NODE 1 (Pod-like Architecture)
   # ============================================================================
-  
+
   # Network Holder / Pause Container for Node 1
   lb-node-1:
     image: alpine:latest
@@ -609,10 +609,10 @@ services:
       - /sys:/host/sys:ro
       - /:/rootfs:ro
     command:
-      - '--path.procfs=/host/proc'
-      - '--path.rootfs=/rootfs'
-      - '--path.sysfs=/host/sys'
-      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - "--path.procfs=/host/proc"
+      - "--path.rootfs=/rootfs"
+      - "--path.sysfs=/host/sys"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
     networks:
       - wazuh-net
 
@@ -627,12 +627,12 @@ services:
       - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.retention.time=200h'
-      - '--web.enable-lifecycle'
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--storage.tsdb.retention.time=200h"
+      - "--web.enable-lifecycle"
     depends_on:
       - cadvisor
       - node-exporter
@@ -716,7 +716,7 @@ services:
       - GRAYLOG_PASSWORD_SECRET=somepasswordpepper1234567890
       - GRAYLOG_ROOT_PASSWORD_SHA2=8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918
       - GRAYLOG_HTTP_BIND_ADDRESS=0.0.0.0:9000
-      - GRAYLOG_HTTP_EXTERNAL_URI=http://127.0.0.1:9000/
+      - GRAYLOG_HTTP_EXTERNAL_URI=http://172.25.0.222:9000/
       - GRAYLOG_MONGODB_URI=mongodb://mongodb:27017/graylog
       - GRAYLOG_ELASTICSEARCH_HOSTS=https://admin:SecretPassword@wazuh1.indexer:9200,https://admin:SecretPassword@wazuh2.indexer:9200,https://admin:SecretPassword@wazuh3.indexer:9200
       - GRAYLOG_ELASTICSEARCH_RETRY_ON_TIMEOUT=true
@@ -755,8 +755,6 @@ services:
       - ZBX_SERVER_PORT=10051
       - ZBX_PASSIVE_ALLOW=true
       - ZBX_ACTIVE_ALLOW=true
-
-
 
 volumes:
   mongodb_data:

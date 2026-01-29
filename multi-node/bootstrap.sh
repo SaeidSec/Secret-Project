@@ -93,6 +93,22 @@ if [ "$HEALTHY" = true ]; then
     else
         echo -e "${RED}❌ Error: Master container not found for template upload.${NC}"
     fi
+
+    # 9. Wait for Graylog
+    echo -e "${BLUE}⏳ Waiting for Graylog to be ready (Port 9000)...${NC}"
+    MAX_RETRIES=20
+    RETRY_COUNT=0
+    GRAYLOG_READY=false
+    while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        if curl -s http://localhost:9000 > /dev/null; then
+            echo -e "${GREEN}✅ Graylog is UP!${NC}"
+            GRAYLOG_READY=true
+            break
+        fi
+        echo -n "."
+        sleep 10
+        RETRY_COUNT=$((RETRY_COUNT+1))
+    done
 else
     echo -e "${RED}❌ Warning: Indexer timeout. You might need to run the template fix manually later.${NC}"
 fi
