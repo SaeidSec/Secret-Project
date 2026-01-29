@@ -125,13 +125,16 @@ git clone https://github.com/SaeidSec/Docker-base-Enterprise-Grade-Wazuh-SIEM-Ad
 cd Docker-base-Enterprise-Grade-Wazuh-SIEM-Advanced-Load-Balancing-and-High-Availability-Architecture/multi-node
 ```
 
-### 2. Generate Certificates
+### 3. Bootstrap and Generate Certificates
+
+To ensure all folders and certificates are prepared correctly, run the bootstrap script:
 
 ```bash
-docker compose -f generate-indexer-certs.yml run --rm generator
+cd multi-node
+bash bootstrap.sh
 ```
 
-### 3. Start the Stack
+### 4. Start the Stack
 
 ```bash
 docker compose up -d
