@@ -134,7 +134,7 @@
 
 \textbf{Author:} Abu Saeid \\
 \textbf{Date:} January 29, 2026 \\
-\textbf{Version:} 3.1.0 (Ultimate "One-Click" Edition) \\
+\textbf{Version:} 3.1.5 (Enterprise Stability Edition) \\
 \textbf{Classification:} Enterprise Technical Manual \\
 \textbf{Repository:} 
 \href{https://github.com/SaeidSec/Docker-base-Enterprise-Grade-Wazuh-SIEM-Advanced-Load-Balancing-and-High-Availability-Architecture}{GitHub} \\
@@ -435,11 +435,21 @@ To ensure that agents can always recover their connection even if local keys bec
 This ensures that the "Duplicate Name" error never blocks a legitimate agent from re-joining the cluster.
 
 \subsubsection{Solution 2: Persistent TCP Session Tuning}
-In the Nginx Stream blocks, the connection lifecycle was hardened for high-latency or transient failover scenarios:
-\begin{itemize}
-    \item \textbf{\texttt{proxy\_timeout 300s}}: Increased from the default to ensure that long-lived agent TCP connections are not prematurely terminated by the load balancer during a manager election or container restart.
-\end{itemize}
 This provides a "warm" buffer that allows the cluster components to recover before the network layer drops the session.
+
+\subsection{6.4 Phase 4: Graylog Enterprise SSL \& JVM Tuning}
+The final hardening phase optimized the Graylog 7.0 stack for enterprise-grade reliability and SSL integrity. \\
+
+\begin{enumerate}
+    \item \textbf{Full SSL Verification}: 
+    Transitioned Graylog's connection to the Indexer Cluster from \textit{none} to \textit{full} verification. This ensures Graylog rejects any untrusted communication, fulfilling strict compliance requirements.
+    
+    \item \textbf{JVM Heap Optimization}: 
+    Increased Graylog's JVM heap from 1GB to \textbf{2GB} (\texttt{-Xms2g -Xmx2g}). This prevents Garbage Collection (GC) pauses during high-volume log ingestion.
+    
+    \item \textbf{Cross-Origin (CORS) \& VIP Persistence}: 
+    Enabled \texttt{GRAYLOG\_HTTP\_ENABLE\_CORS=true} and standardized \texttt{GRAYLOG\_HTTP\_PUBLISH\_URI} to the VIP, eliminating "under-provisioned" warnings.
+\end{enumerate}
 
 --- \\
 
@@ -571,6 +581,10 @@ sudo bash bootstrap.sh
 \end{itemize}
 \item \textbf{Verification}: Once the script displays \texttt{ALL FIXED!}, the dashboard is ready for immediate use.
 \end{enumerate}
+
+\begin{itemize}
+    \item \textbf{Permission Fixes}: The script automatically applies \texttt{chmod 644} to SSL certificates, ensuring non-root services (like Graylog UID 1100) can read the truststore and PEM files.
+\end{itemize}
 
 \subsubsection{10.3 Scaling the Cluster}
 \begin{itemize}

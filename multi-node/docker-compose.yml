@@ -718,13 +718,15 @@ services:
       - GRAYLOG_ROOT_PASSWORD_SHA2=8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918
       - GRAYLOG_HTTP_BIND_ADDRESS=0.0.0.0:9000
       - GRAYLOG_HTTP_EXTERNAL_URI=http://172.25.0.222:9000/
+      - GRAYLOG_HTTP_PUBLISH_URI=http://172.25.0.222:9000/
+      - GRAYLOG_HTTP_ENABLE_CORS=true
       - GRAYLOG_MONGODB_URI=mongodb://mongodb:27017/graylog
       - GRAYLOG_ELASTICSEARCH_HOSTS=https://admin:SecretPassword@wazuh1.indexer:9200,https://admin:SecretPassword@wazuh2.indexer:9200,https://admin:SecretPassword@wazuh3.indexer:9200
       - GRAYLOG_ELASTICSEARCH_RETRY_ON_TIMEOUT=true
       - GRAYLOG_ELASTICSEARCH_MAX_TOTAL_CONNECTIONS=200
-      - GRAYLOG_ELASTICSEARCH_SSL_VERIFICATION_MODE=none
+      - GRAYLOG_ELASTICSEARCH_SSL_VERIFICATION_MODE=full
       # Use custom truststore for SSL
-      - GRAYLOG_SERVER_JAVA_OPTS=-Xms1g -Xmx1g
+      - GRAYLOG_SERVER_JAVA_OPTS=-Xms2g -Xmx2g -Djavax.net.ssl.trustStore=/usr/share/graylog/data/config/truststore.jks -Djavax.net.ssl.trustStorePassword=changeit
     # Graylog service is now proxied by Nginx Load Balancer on Port 9000
     # ports:
     #   - "9000:9000"

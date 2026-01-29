@@ -2,8 +2,8 @@
 ## Advanced Load Balancing, High Availability & Full-Stack Observability
 
 **Author:** Abu Saeid  
-**Date:** January 24, 2026  
-**Version:** 3.0.0 (Ultimate Whitepaper Edition)  
+**Date:** January 29, 2026  
+**Version:** 3.1.5 (Enterprise Stability Edition)  
 **Classification:** Enterprise Technical Manual  
 **Repository:** [GitHub](https://github.com/SaeidSec/Docker-base-Enterprise-Grade-Wazuh-SIEM-Advanced-Load-Balancing-and-High-Availability-Architecture)
 
@@ -322,18 +322,25 @@ The `docker-compose.yml` was optimized to eliminate hardcoded dependencies:
 *   **Host-Level Decoupling**: Utilized `extra_hosts` to map `wazuh.vip` to the actual VIP at the container level. Infrastructure network changes now require zero modifications to critical service environment variables.
 
 ## 6.3 Phase 3: Resilience Optimization & Agent Key Persistence
-During aggressive high-availability testing, it was observed that rapid failover events could cause Wazuh agents to lose synchronization with the manager, leading to "Duplicate Agent Name" errors and connection flapping.
-
-### Solution 1: Forced Agent Re-registration
-To ensure that agents can always recover their connection even if local keys become desynchronized during a failover, the Wazuh Manager's `auth` configuration was optimized:
-*   **`force_insert`**: Enabled to allow the manager to overwrite existing agent records with the same name if a new registration request is received.
-*   **`force_time`**: Set to `0` to allow immediate re-registration without a timeout penalty.
 This ensures that the "Duplicate Name" error never blocks a legitimate agent from re-joining the cluster.
 
 ### Solution 2: Persistent TCP Session Tuning
 In the Nginx Stream blocks, the connection lifecycle was hardened for high-latency or transient failover scenarios:
 *   **`proxy_timeout 300s`**: Increased from the default to ensure that long-lived agent TCP connections are not prematurely terminated by the load balancer during a manager election or container restart.
 This provides a "warm" buffer that allows the cluster components to recover before the network layer drops the session.
+
+## 6.4 Phase 4: Graylog Enterprise SSL & JVM Tuning
+The final hardening phase optimized the Graylog 7.0 stack for enterprise-grade reliability and SSL integrity.
+
+1.  **Full SSL Verification**:
+    *   Transitioned Graylog's connection to the Indexer Cluster from `none` to `full` verification.
+    *   **Implementation**: Mounted the system `truststore.jks` and configured `-Djavax.net.ssl.trustStore` in Java options. This ensures Graylog rejects any untrusted communication, fulfilling strict compliance requirements.
+2.  **JVM Heap Optimization**:
+    *   Increased Graylog's JVM heap from 1GB to **2GB** (`-Xms2g -Xmx2g`).
+    *   **Impact**: Prevents Garbage Collection (GC) pauses during high-volume log ingestion, which previously caused dashboard timeout errors.
+3.  **Cross-Origin (CORS) & VIP Persistence**:
+    *   Enabled `GRAYLOG_HTTP_ENABLE_CORS=true` and standardized `GRAYLOG_HTTP_PUBLISH_URI` to the VIP.
+    *   **Benefit**: Eliminates "Graylog is under-provisioned" warnings and ensure the UI is fully accessible across different network segments.
 
 ---
 
@@ -430,6 +437,9 @@ Before deployment, the host must be prepared:
 4.  **Core**: `docker-compose up -d wazuh.master wazuh.worker wazuh.dashboard`.
 5.  **Infrastructure**: `docker-compose up -d lb-node-1 lb-node-2 nginx-lb-1 nginx-lb-2 keepalived-1 keepalived-2`.
 6.  **Observability**: `docker-compose up -d zabbix-postgres zabbix-server grafana prometheus`.
+
+> [!TIP]
+> **Universal Fixer**: For the most reliable deployment, use the `bootstrap.sh` script. It automates kernel tuning, certificate generation, and—crucially—fixes permission issues (`chmod 644`) that could block non-root services like Graylog from reading mounted SSL certs.
 
 ## 11.3 Scaling the Cluster
 *   **Adding Indexers**: Simply duplicate the `wazuh3.indexer` service definition, update the certificate generation `instances.yml`, and add the new node to `nginx_ha.conf`.

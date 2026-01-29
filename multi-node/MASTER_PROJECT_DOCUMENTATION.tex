@@ -98,7 +98,7 @@
 \lstset{basicstyle=\ttfamily\scriptsize, breaklines=true, frame=single, backgroundcolor=\color{gray!5}, keywordstyle=\color{soc-blue}}
 \title{\textbf{\Huge Enterprise-Grade Wazuh SIEM} \\ \vspace{0.5cm} \Large The Ultimate Whitepaper Edition}
 \author{\textbf{Abu Saeid}}
-\date{January 24, 2026}
+\date{January 29, 2026}
 \begin{document}
 \begin{titlepage}
     \centering
@@ -111,8 +111,8 @@
 \subsection{Advanced Load Balancing, High Availability \& Full-Stack Observability}
 
 \textbf{Author:} Abu Saeid \\
-\textbf{Date:} January 24, 2026 \\
-\textbf{Version:} 3.0.0 (Ultimate Whitepaper Edition) \\
+\textbf{Date:} January 29, 2026 \\
+\textbf{Version:} 3.1.5 (Enterprise Stability Edition) \\
 \textbf{Classification:} Enterprise Technical Manual \\
 \textbf{Repository:} \href{https://github.com/SaeidSec/Docker-base-Enterprise-Grade-Wazuh-SIEM-Advanced-Load-Balancing-and-High-Availability-Architecture}{GitHub} \\
 
@@ -347,43 +347,37 @@ This instructs Docker to \textbf{not} create a new network stack for them, but i
 \item   If Nginx fails, priority is decremented by 20 (Result: 81), prompting the Backup node (Priority 100) to preemptively take over the VIP.
 \end{itemize}
 
-\section{Infrastructure Hardening \& Configuration Audit}
-This section details the critical gap analysis performed on the initial architecture and the subsequent engineering phases implemented to reach enterprise-grade stability.
+\subsection{6.3 Phase 3: Resilience Optimization \& Agent Key Persistence}
+During aggressive high-availability testing, it was observed that rapid failover events could cause Wazuh agents to lose synchronization with the manager, leading to "Duplicate Agent Name" errors and connection flapping.
 
-\subsection{6.1 Phase 1: Security Audit \& Vulnerability Identification}
-Before finalizing the production stack, a comprehensive audit identified four primary architectural risks that could compromise SOC availability and maintainability.
+\subsubsection{Solution 1: Forced Agent Re-registration}
+To ensure that agents can always recover their connection even if local keys become desynchronized during a failover, the Wazuh Manager's \texttt{auth} configuration was optimized:
+\begin{itemize}
+    \item \textbf{\texttt{force\_insert}}: Enabled to allow the manager to overwrite existing agent records with the same name if a new registration request is received.
+    \item \textbf{\texttt{force\_time}}: Set to \texttt{0} to allow immediate re-registration without a timeout penalty.
+\end{itemize}
+This ensures that the "Duplicate Name" error never blocks a legitimate agent from re-joining the cluster.
+
+\subsubsection{Solution 2: Persistent TCP Session Tuning}
+In the Nginx Stream blocks, the connection lifecycle was hardened for high-latency or transient failover scenarios:
+\begin{itemize}
+    \item \textbf{\texttt{proxy\_timeout 300s}}: Increased from the default to ensure that long-lived agent TCP connections are not prematurely terminated by the load balancer during a manager election or container restart.
+\end{itemize}
+This provides a "warm" buffer that allows the cluster components to recover before the network layer drops the session.
+
+\subsection{6.4 Phase 4: Graylog Enterprise SSL \& JVM Tuning}
+The final hardening phase optimized the Graylog 7.0 stack for enterprise-grade reliability and SSL integrity. \\
 
 \begin{enumerate}
-    \item \textbf{Configuration Fragility (Hardcoded IPs)}: 
-    \textit{Verdict: Partially True}. While Nginx utilized hostnames in upstream blocks, the \texttt{docker-compose.yml} relied on hardcoded VIP (\texttt{172.25.0.222}) for critical environment variables like \texttt{INDEXER\_URL}. This created a maintenance bottleneck where subnet changes would require global manual updates.
+    \item \textbf{Full SSL Verification}: 
+    Transitioned Graylog's connection to the Indexer Cluster from \textit{none} to \textit{full} verification. This ensures Graylog rejects any untrusted communication, fulfilling strict compliance requirements.
     
-    \item \textbf{DNS Resolution Stagnation}: 
-    \textit{Verdict: True (Potential)}. Upstream blocks in open-source Nginx resolve hostnames only once at startup. If a backend container (like Grafana) is recreated with a new internal IP, Nginx would continue pointing to the stale address until a manual reload occurs.
+    \item \textbf{JVM Heap Optimization}: 
+    Increased Graylog's JVM heap from 1GB to \textbf{2GB} (\texttt{-Xms2g -Xmx2g}). This prevents Garbage Collection (GC) pauses during high-volume log ingestion.
     
-    \item \textbf{Protocol Transparency Gaps (Missing Headers)}: 
-    \textit{Verdict: True}. The absence of \texttt{X-Forwarded-Proto} and WebSocket Upgrade headers threatened the reliability of real-time monitoring streams and HTTPS redirection logic within Grafana and Zabbix.
-    
-    \item \textbf{Health Monitoring \& Timeout Blindness}: 
-    \textit{Verdict: True}. Default Nginx timeouts (60s) and passive checks were insufficiently granular. Without explicit \texttt{max\_fails} and \texttt{proxy\_read\_timeout}, a heavy indexer query could cause UI hangs or accidental backend blacklisting.
+    \item \textbf{Cross-Origin (CORS) \& VIP Persistence}: 
+    Enabled \texttt{GRAYLOG\_HTTP\_ENABLE\_CORS=true} and standardized \texttt{GRAYLOG\_HTTP\_PUBLISH\_URI} to the VIP, eliminating "under-provisioned" warnings.
 \end{enumerate}
-
-\subsection{6.2 Phase 2: Implementation \& Remediation (Hardening Solutions)}
-To mitigate the identified risks, the architecture was refactored with the following solutions:
-
-\subsubsection{Solution 1: Proactive Nginx Hardening}
-The \texttt{nginx\_ha.conf} was refactored with explicit traffic control directives:
-\begin{itemize}
-    \item \textbf{Timeout Governance}: Added global \texttt{proxy\_connect\_timeout}, \texttt{proxy\_read\_timeout}, and \texttt{proxy\_send\_timeout} (60s) to standardize connection lifecycles.
-    \item \textbf{Intelligent Health Checks}: Configured upstreams with \texttt{max\_fails=3} and \texttt{fail\_timeout=30s}, allowing the Load Balancer to intelligently bypass failing nodes without site-wide downtime.
-    \item \textbf{Protocol Hardening}: Injected \texttt{X-Forwarded-Proto \$scheme} for HTTPS integrity and full WebSocket support (\texttt{Upgrade} / \texttt{Connection} headers) for 24/7 live dashboard reliability.
-\end{itemize}
-
-\subsubsection{Solution 2: Environment Abstraction Layer}
-The \texttt{docker-compose.yml} was optimized to eliminate hardcoded dependencies:
-\begin{itemize}
-    \item \textbf{VIP Aliasing}: Replaced the hardcoded \texttt{172.25.0.222} with a logical internal alias, \textbf{\texttt{wazuh.vip}}.
-    \item \textbf{Host-Level Decoupling}: Utilized \texttt{extra\_hosts} to map \texttt{wazuh.vip} to the actual VIP at the container level. Infrastructure network changes now require zero modifications to critical service environment variables.
-\end{itemize}
 
 --- \\
 

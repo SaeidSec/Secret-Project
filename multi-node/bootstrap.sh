@@ -47,6 +47,11 @@ echo -e "${BLUE}🛑 Stopping services and cleaning up...${NC}"
 docker compose down --remove-orphans > /dev/null 2>&1 || true
 
 # 5. Fix "Not a Directory" Mount Issues
+# Fix permission issues that block non-root users (like Graylog UID 1100) from reading certs
+echo -e "${BLUE}🔐 Fixing Indexer Certificate permissions...${NC}"
+sudo find ./config/wazuh_indexer_ssl_certs -type f -name "*.pem" -exec chmod 644 {} +
+sudo find ./config/wazuh_indexer_ssl_certs -type f -name "*-key.pem" -exec chmod 644 {} +
+sudo chmod 644 ./config/graylog/truststore.jks || true
 echo -e "${BLUE}🔧 Cleaning invalid bind-mount folders...${NC}"
 CERT_DIR="config/wazuh_indexer_ssl_certs"
 if [ -d "$CERT_DIR" ]; then

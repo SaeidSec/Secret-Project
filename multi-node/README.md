@@ -12,7 +12,7 @@
 - ✅ **Multi-Node Cluster** - Wazuh Master/Worker + 3-node indexer cluster  
 - ✅ **Comprehensive Monitoring** - Zabbix agents on all components + Grafana dashboards
 - ✅ **Active Defense** - Beelzebub AI Honeypot (SSH & HTTP decoys) & Cowrie (SSH/Telnet)
-- ✅ **Advanced Log Management** - Graylog 7.0.3 for non-security and multi-source log analysis
+- ✅ **Advanced Log Management** - Graylog 7.0.x with Full SSL Verification & JVM Tuning
 - ✅ **Production-Ready** - SSL/TLS encryption with automated certificate generation
 
 ## 📊 Architecture
