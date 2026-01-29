@@ -238,6 +238,7 @@ services:
       - "8080:8080"
       - "9090:9090"
       - "10051:10051"
+      - "9000:9000"
     networks:
       - wazuh-net
 
@@ -723,13 +724,14 @@ services:
       - GRAYLOG_ELASTICSEARCH_MAX_TOTAL_CONNECTIONS=200
       - GRAYLOG_ELASTICSEARCH_SSL_VERIFICATION_MODE=none
       # Use custom truststore for SSL
-      - GRAYLOG_SERVER_JAVA_OPTS=-Djavax.net.ssl.trustStore=/usr/share/graylog/data/config/truststore.jks -Djavax.net.ssl.trustStorePassword=changeit
-    ports:
-      - "9000:9000"
-      - "12201:12201/udp"
-      - "12201:12201/tcp"
-      - "1515:1515/udp"
-      - "1515:1515/tcp"
+      - GRAYLOG_SERVER_JAVA_OPTS=-Xms1g -Xmx1g
+    # Graylog service is now proxied by Nginx Load Balancer on Port 9000
+    # ports:
+    #   - "9000:9000"
+    #   - "12201:12201/udp"
+    #   - "12201:12201/tcp"
+    #   - "1515:1515/udp"
+    #   - "1515:1515/tcp"
     volumes:
       - graylog_data:/usr/share/graylog/data/data
       - graylog_journal:/usr/share/graylog/data/journal
