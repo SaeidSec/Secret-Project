@@ -133,8 +133,8 @@
 \subsection{Advanced Load Balancing, High Availability \& Full-Stack Observability}
 
 \textbf{Author:} Abu Saeid \\
-\textbf{Date:} January 24, 2026 \\
-\textbf{Version:} 3.0.0 (Ultimate Whitepaper Edition) \\
+\textbf{Date:} January 29, 2026 \\
+\textbf{Version:} 3.1.0 (Ultimate "One-Click" Edition) \\
 \textbf{Classification:} Enterprise Technical Manual \\
 \textbf{Repository:} 
 \href{https://github.com/SaeidSec/Docker-base-Enterprise-Grade-Wazuh-SIEM-Advanced-Load-Balancing-and-High-Availability-Architecture}{GitHub} \\
@@ -551,14 +551,25 @@ Before deployment, the host must be prepared: \\
 \item \textbf{Ports}: Ensure ports 443, 1514, 1515, 55000, 80, 2222, 2223 are free.
 \end{enumerate}
 
-\subsection{11.2 Deployment Sequence (Critical Order)}
+\subsection{11.2 Universal Deployment Sequence ("One-Click")}
+To ensure a perfect installation on any Linux distribution, we have engineered a "Super Fixer" bootstrap script that automates the complex setup lifecycle.
+
 \begin{enumerate}
-\item \textbf{Certificates}: Run \texttt{docker-compose -f generate-indexer-certs.yml run --rm generator} to create the SSL chain of trust.
-\item \textbf{Network}: \texttt{docker network create wazuh-net}.
-\item \textbf{Storage}: \texttt{docker-compose up -d wazuh1.indexer wazuh2.indexer wazuh3.indexer wazuh4.indexer}. \textit{Wait for green health.}
-\item \textbf{Core}: \texttt{docker-compose up -d wazuh.master wazuh.worker wazuh.dashboard}.
-\item \textbf{Infrastructure}: \texttt{docker-compose up -d lb-node-1 lb-node-2 nginx-lb-1 nginx-lb-2 keepalived-1 keepalived-2}.
-\item \textbf{Observability}: \texttt{docker-compose up -d zabbix-postgres zabbix-server grafana prometheus}.
+\item \textbf{Preparation}: Clone the repository and navigate to the \texttt{multi-node} directory.
+\item \textbf{Execution}: Run the Universal Fixer with root privileges:
+\begin{lstlisting}[language=bash]
+sudo bash bootstrap.sh
+\end{lstlisting}
+\item \textbf{Automated Tasks}: The script will automatically perform:
+\begin{itemize}
+    \item System kernel tuning (\texttt{vm.max_map_count}).
+    \item SSL Certificate generation via the generator service.
+    \item Environment file (\texttt{.env}) creation and validation.
+    \item Dynamic Docker volume cleanup to prevent mount errors.
+    \item High-Availability stack deployment.
+    \item \textbf{Template Auto-Loading}: The script waits for the Indexer cluster to be healthy and then force-uploads the Wazuh index template from the Manager.
+\end{itemize}
+\item \textbf{Verification}: Once the script displays \texttt{ALL FIXED!}, the dashboard is ready for immediate use.
 \end{enumerate}
 
 \subsubsection{10.3 Scaling the Cluster}
