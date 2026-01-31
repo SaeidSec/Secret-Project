@@ -71,13 +71,13 @@ If you prefer manual control:
 
 | Service | URL | Credentials |
 |---------|-----|-------------|
-| Wazuh Dashboard | https://localhost:443 | admin / SecretPassword |
-| Graylog Web | http://localhost:9000 | admin / admin |
-| Zabbix Web | http://localhost:8080 | Admin / zabbix |
-| Grafana | http://localhost:3000 | admin / admin |
-| Beelzebub SSH | ssh localhost -p 2222 | root / (any password) |
-| Cowrie SSH | ssh localhost -p 2223 | root / (any password) |
-| Beelzebub HTTP | http://localhost:8000 | (Decoy WordPress) |
+| Wazuh Dashboard | https://172.25.0.222:443 | admin / SecretPassword |
+| Graylog Web | http://172.25.0.222:9000 | admin / admin |
+| Zabbix Web | http://172.25.0.222:8080 | Admin / zabbix |
+| Grafana | http://172.25.0.222:3000 | admin / admin |
+| Beelzebub SSH | ssh 172.25.0.222 -p 2222 | root / (any password) |
+| Cowrie SSH | ssh 172.25.0.222 -p 2223 | root / (any password) |
+| Beelzebub HTTP | http://172.25.0.222:8000 | (Decoy WordPress) |
 
 ## 📖 Documentation
 
@@ -182,7 +182,7 @@ docker compose logs <service_name>
 
 ### Verify Indexer Cluster
 ```bash
-curl -k -u admin:SecretPassword https://localhost:9200/_cluster/health?pretty
+curl -k -u admin:SecretPassword https://172.25.0.222:9200/_cluster/health?pretty
 ```
 
 ### Test Agent Connectivity

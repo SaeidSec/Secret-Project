@@ -163,10 +163,10 @@ openssl rsa -noout -modulus -in config/wazuh_indexer_ssl_certs/wazuh1.indexer-ke
 
 ```bash
 # Test indexer SSL
-openssl s_client -connect localhost:9200 -CAfile config/wazuh_indexer_ssl_certs/root-ca.pem
+openssl s_client -connect 172.25.0.222:9200 -CAfile config/wazuh_indexer_ssl_certs/root-ca.pem
 
 # Test dashboard SSL
-openssl s_client -connect localhost:443 -CAfile config/wazuh_indexer_ssl_certs/root-ca.pem
+openssl s_client -connect 172.25.0.222:443 -CAfile config/wazuh_indexer_ssl_certs/root-ca.pem
 ```
 
 ## Certificate Rotation
@@ -206,7 +206,7 @@ docker restart wazuh.dashboard
 
 3. **Verify cluster health:**
 ```bash
-curl -k -u admin:SecretPassword https://localhost:9200/_cluster/health?pretty
+curl -k -u admin:SecretPassword https://172.25.0.222:9200/_cluster/health?pretty
 ```
 
 ## Troubleshooting

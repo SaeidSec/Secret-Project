@@ -240,7 +240,8 @@ services:
       - "10051:10051"
       - "9000:9000"
     networks:
-      - wazuh-net
+      wazuh-net:
+        ipv4_address: 172.25.0.10
 
   nginx-lb-1:
     image: nginx:stable
@@ -284,7 +285,8 @@ services:
     command: tail -f /dev/null
     # No ports mapped for backup node on single host to avoid conflicts
     networks:
-      - wazuh-net
+      wazuh-net:
+        ipv4_address: 172.25.0.11
 
   nginx-lb-2:
     image: nginx:stable

@@ -148,19 +148,19 @@ docker compose logs -f
 docker compose ps
 
 # Check indexer cluster
-curl -k -u admin:SecretPassword https://localhost:9200/_cluster/health?pretty
+curl -k -u admin:SecretPassword https://172.25.0.222:9200/_cluster/health?pretty
 ```
 
 ## Access Web Interfaces
 
 | Service | URL | Credentials |
 |---------|-----|-------------|
-| Wazuh Dashboard | https://localhost:443 | admin / SecretPassword |
-| Graylog Web | http://localhost:9000 | admin / admin |
-| Zabbix Web | http://localhost:8080 | Admin / zabbix |
-| Grafana | http://localhost:3000 | admin / admin |
-| Beelzebub SSH | ssh localhost -p 2222 | root / (any password) |
-| Cowrie SSH | ssh localhost -p 2223 | root / (any password) |
+| Wazuh Dashboard | https://172.25.0.222:443 | admin / SecretPassword |
+| Graylog Web | http://172.25.0.222:9000 | admin / admin |
+| Zabbix Web | http://172.25.0.222:8080 | Admin / zabbix |
+| Grafana | http://172.25.0.222:3000 | admin / admin |
+| Beelzebub SSH | ssh 172.25.0.222 -p 2222 | root / (any password) |
+| Cowrie SSH | ssh 172.25.0.222 -p 2223 | root / (any password) |
 
 ## Agent Enrollment
 
@@ -190,7 +190,7 @@ docker compose restart <service_name>
 ### Indexer Cluster Issues
 
 ```bash
-curl -k -u admin:SecretPassword https://localhost:9200/_cat/nodes?v
+curl -k -u admin:SecretPassword https://172.25.0.222:9200/_cat/nodes?v
 docker restart wazuh1.indexer wazuh2.indexer wazuh3.indexer
 ```
 

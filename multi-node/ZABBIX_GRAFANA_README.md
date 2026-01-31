@@ -198,7 +198,7 @@ docker exec -it grafana ping wazuh1.indexer
 docker exec -it grafana ping zabbix-server
 
 # Verify OpenSearch is accessible
-curl -k -u admin:SecretPassword https://localhost:9200
+curl -k -u admin:SecretPassword https://172.25.0.222:9200
 ```
 
 ### Zabbix Agents Not Reporting
