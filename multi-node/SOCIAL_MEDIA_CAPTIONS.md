@@ -41,4 +41,30 @@ At **Aegisryx Labs**, we are pushing the boundaries of what a modern security op
 
 Watch the full walkthrough below! 👇
 
-#AegisryxLabs #CyberSecurity #HackerDefense #Wazuh #TechInnovation #SecurityOps #DigitalDefense
+
+---
+
+## 🔧 LinkedIn Update: Solving HA Split-Brain in Docker 🛠️
+
+**Headline:** Crushing Complexity: How We Solved High-Availability Split-Brain in Wazuh + Docker 🧠⚡
+
+At **Aegisryx Labs**, building an Enterprise SIEM isn't just about deploying containers—it's about ensuring they stay online, no matter what.
+
+**The Challenge:**
+Deploying a clustered Wazuh environment using **Keepalived** for Virtual IP (VIP) management often hits a roadblock in Docker bridge networks. The default Multicast VRRP packets get dropped or filtered, leading to a "Split-Brain" scenario where *every* node thinks it's the Master. The result? 
+💥 Network flapping.
+💥 Active TCP connections reset.
+💥 "Transport endpoint not connected" errors for agents.
+
+**The Solution:**
+We re-engineered the failover mechanism to prioritize stability over defaults:
+1️⃣ **Unicast Peering:** Switched Keepalived from Multicast to Unicast, forcing direct point-to-point synchronization.
+2️⃣ **Static IP Assignment:** locked down Load Balancer IPs (`172.25.0.10` / `.11`) in `docker-compose` to guarantee peer discovery.
+3️⃣ **Verifiable Failover:** Achieved sub-second VIP transition without dropping agent sessions.
+
+**The Outcome:**
+A rock-solid, self-healing SIEM architecture that maintains observability even during node failures. 🛡️
+
+Solving these deep infrastructure challenges is what makes our **Advanced Wazuh SIEM** truly Enterprise-Grade.
+
+#DevOps #SRE #Docker #Wazuh #HighAvailability #LinuxNetworking #SysAdmin #AegisryxLabs #ProblemSolving
