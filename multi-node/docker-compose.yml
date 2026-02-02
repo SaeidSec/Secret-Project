@@ -1,7 +1,7 @@
 # Wazuh App Copyright (C) 2017, Wazuh Inc. (License GPLv2)
 services:
   wazuh.master:
-    image: wazuh/wazuh-manager:4.14.1
+    image: wazuh/wazuh-manager:${WAZUH_VERSION}
     hostname: wazuh.master
     restart: always
     ulimits:
@@ -18,15 +18,15 @@ services:
     ports:
       - "514:514/udp"
     environment:
-      - INDEXER_URL=https://wazuh.vip:9200
-      - INDEXER_USERNAME=admin
-      - INDEXER_PASSWORD=SecretPassword
+      - INDEXER_URL=https://${WAZUH_VIP_HOSTNAME}:9200
+      - INDEXER_USERNAME=${INDEXER_USERNAME:-admin}
+      - INDEXER_PASSWORD=${INDEXER_PASSWORD}
       - FILEBEAT_SSL_VERIFICATION_MODE=full
       - SSL_CERTIFICATE_AUTHORITIES=/etc/ssl/root-ca.pem
       - SSL_CERTIFICATE=/etc/ssl/filebeat.pem
       - SSL_KEY=/etc/ssl/filebeat.key
-      - API_USERNAME=wazuh-wui
-      - API_PASSWORD=MyS3cr37P450r.*-
+      - API_USERNAME=${API_USERNAME}
+      - API_PASSWORD=${WAZUH_API_PASSWORD}
     volumes:
       - master-wazuh-api-configuration:/var/ossec/api/configuration
       - master-wazuh-etc:/var/ossec/etc
@@ -57,10 +57,10 @@ services:
     networks:
       - wazuh-net
     extra_hosts:
-      - "wazuh.vip:172.25.0.222"
+      - "${WAZUH_VIP_HOSTNAME}:${VIRTUAL_IP}"
 
   wazuh.worker:
-    image: wazuh/wazuh-manager:4.14.1
+    image: wazuh/wazuh-manager:${WAZUH_VERSION}
     hostname: wazuh.worker
     restart: always
     ulimits:
@@ -73,9 +73,9 @@ services:
     expose:
       - "1514"
     environment:
-      - INDEXER_URL=https://wazuh.vip:9200
-      - INDEXER_USERNAME=admin
-      - INDEXER_PASSWORD=SecretPassword
+      - INDEXER_URL=https://${WAZUH_VIP_HOSTNAME}:9200
+      - INDEXER_USERNAME=${INDEXER_USERNAME:-admin}
+      - INDEXER_PASSWORD=${INDEXER_PASSWORD}
       - FILEBEAT_SSL_VERIFICATION_MODE=full
       - SSL_CERTIFICATE_AUTHORITIES=/etc/ssl/root-ca.pem
       - SSL_CERTIFICATE=/etc/ssl/filebeat.pem
@@ -103,16 +103,16 @@ services:
     networks:
       - wazuh-net
     extra_hosts:
-      - "wazuh.vip:172.25.0.222"
+      - "${WAZUH_VIP_HOSTNAME}:${VIRTUAL_IP}"
 
   wazuh1.indexer:
-    image: wazuh/wazuh-indexer:4.14.1
+    image: wazuh/wazuh-indexer:${INDEXER_VERSION}
     hostname: wazuh1.indexer
     restart: always
     expose:
       - "9200"
     environment:
-      - "OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g"
+      - "OPENSEARCH_JAVA_OPTS=${INDEXER_JAVA_OPTS}"
       - "bootstrap.memory_lock=true"
       - compatibility.override_main_response_version=false
     ulimits:
@@ -135,11 +135,11 @@ services:
       - wazuh-net
 
   wazuh2.indexer:
-    image: wazuh/wazuh-indexer:4.14.1
+    image: wazuh/wazuh-indexer:${INDEXER_VERSION}
     hostname: wazuh2.indexer
     restart: always
     environment:
-      - "OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g"
+      - "OPENSEARCH_JAVA_OPTS=${INDEXER_JAVA_OPTS}"
       - "bootstrap.memory_lock=true"
       - compatibility.override_main_response_version=false
     ulimits:
@@ -160,11 +160,11 @@ services:
       - wazuh-net
 
   wazuh3.indexer:
-    image: wazuh/wazuh-indexer:4.14.1
+    image: wazuh/wazuh-indexer:${INDEXER_VERSION}
     hostname: wazuh3.indexer
     restart: always
     environment:
-      - "OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g"
+      - "OPENSEARCH_JAVA_OPTS=${INDEXER_JAVA_OPTS}"
       - "bootstrap.memory_lock=true"
       - compatibility.override_main_response_version=false
     ulimits:
@@ -185,16 +185,16 @@ services:
       - wazuh-net
 
   wazuh.dashboard:
-    image: wazuh/wazuh-dashboard:4.14.1
+    image: wazuh/wazuh-dashboard:${DASHBOARD_VERSION}
     hostname: wazuh.dashboard
     restart: always
     expose:
       - "5601"
     environment:
-      - OPENSEARCH_HOSTS="https://wazuh.vip:9200"
-      - WAZUH_API_URL="https://wazuh.vip"
-      - API_USERNAME=wazuh-wui
-      - API_PASSWORD=MyS3cr37P450r.*-
+      - OPENSEARCH_HOSTS="https://${WAZUH_VIP_HOSTNAME}:9200"
+      - WAZUH_API_URL="https://${WAZUH_VIP_HOSTNAME}"
+      - API_USERNAME=${API_USERNAME}
+      - API_PASSWORD=${WAZUH_API_PASSWORD}
       - DASHBOARD_USERNAME=kibanaserver
       - DASHBOARD_PASSWORD=kibanaserver
     volumes:
@@ -213,7 +213,7 @@ services:
     networks:
       - wazuh-net
     extra_hosts:
-      - "wazuh.vip:172.25.0.222"
+      - "${WAZUH_VIP_HOSTNAME}:${VIRTUAL_IP}"
 
   # ============================================================================
   # HA NODE 1 (Pod-like Architecture)
@@ -241,7 +241,7 @@ services:
       - "9000:9000"
     networks:
       wazuh-net:
-        ipv4_address: 172.25.0.10
+        ipv4_address: ${LB1_IP}
 
   nginx-lb-1:
     image: nginx:stable
@@ -286,7 +286,7 @@ services:
     # No ports mapped for backup node on single host to avoid conflicts
     networks:
       wazuh-net:
-        ipv4_address: 172.25.0.11
+        ipv4_address: ${LB2_IP}
 
   nginx-lb-2:
     image: nginx:stable
@@ -348,9 +348,9 @@ services:
     hostname: zabbix-postgres
     restart: always
     environment:
-      - POSTGRES_USER=zabbix
-      - POSTGRES_PASSWORD=zabbix_password
-      - POSTGRES_DB=zabbix
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     volumes:
       - zabbix-postgres-data:/var/lib/postgresql/data
     networks:
@@ -370,9 +370,9 @@ services:
       - "10051"
     environment:
       - DB_SERVER_HOST=zabbix-postgres
-      - POSTGRES_USER=zabbix
-      - POSTGRES_PASSWORD=zabbix_password
-      - POSTGRES_DB=zabbix
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
       - ZBX_ENABLE_SNMP_TRAPS=true
       - ZBX_STARTPOLLERS=5
       - ZBX_STARTPOLLERSUNREACHABLE=1
@@ -566,11 +566,11 @@ services:
     expose:
       - "3000"
     environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
       - GF_INSTALL_PLUGINS=grafana-opensearch-datasource,alexanderzobnin-zabbix-app
       - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=alexanderzobnin-zabbix-datasource
-      - GF_SERVER_ROOT_URL=http://172.25.0.222:3000
+      - GF_SERVER_ROOT_URL=http://${VIRTUAL_IP}:3000
       - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
       - grafana-data:/var/lib/grafana
@@ -711,24 +711,24 @@ services:
 
   # Graylog 7.0.3
   graylog:
-    image: graylog/graylog:7.0
+    image: graylog/graylog:${GRAYLOG_VERSION}
     hostname: graylog
     restart: always
     environment:
       - GRAYLOG_NODE_ID_FILE=/usr/share/graylog/data/config/node-id
-      - GRAYLOG_PASSWORD_SECRET=somepasswordpepper1234567890
-      - GRAYLOG_ROOT_PASSWORD_SHA2=8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918
+      - GRAYLOG_PASSWORD_SECRET=${GRAYLOG_PASSWORD_SECRET}
+      - GRAYLOG_ROOT_PASSWORD_SHA2=${GRAYLOG_ROOT_PASSWORD_SHA2}
       - GRAYLOG_HTTP_BIND_ADDRESS=0.0.0.0:9000
-      - GRAYLOG_HTTP_EXTERNAL_URI=http://172.25.0.222:9000/
-      - GRAYLOG_HTTP_PUBLISH_URI=http://172.25.0.222:9000/
+      - GRAYLOG_HTTP_EXTERNAL_URI=http://${VIRTUAL_IP}:9000/
+      - GRAYLOG_HTTP_PUBLISH_URI=http://${VIRTUAL_IP}:9000/
       - GRAYLOG_HTTP_ENABLE_CORS=true
       - GRAYLOG_MONGODB_URI=mongodb://mongodb:27017/graylog
-      - GRAYLOG_ELASTICSEARCH_HOSTS=https://admin:SecretPassword@wazuh1.indexer:9200,https://admin:SecretPassword@wazuh2.indexer:9200,https://admin:SecretPassword@wazuh3.indexer:9200
+      - GRAYLOG_ELASTICSEARCH_HOSTS=https://admin:${INDEXER_PASSWORD}@wazuh1.indexer:9200,https://admin:${INDEXER_PASSWORD}@wazuh2.indexer:9200,https://admin:${INDEXER_PASSWORD}@wazuh3.indexer:9200
       - GRAYLOG_ELASTICSEARCH_RETRY_ON_TIMEOUT=true
       - GRAYLOG_ELASTICSEARCH_MAX_TOTAL_CONNECTIONS=200
       - GRAYLOG_ELASTICSEARCH_SSL_VERIFICATION_MODE=full
       # Use custom truststore for SSL
-      - GRAYLOG_SERVER_JAVA_OPTS=-Xms2g -Xmx2g -Djavax.net.ssl.trustStore=/usr/share/graylog/data/config/truststore.jks -Djavax.net.ssl.trustStorePassword=changeit
+      - GRAYLOG_SERVER_JAVA_OPTS=${GRAYLOG_JAVA_OPTS} -Djavax.net.ssl.trustStore=/usr/share/graylog/data/config/truststore.jks -Djavax.net.ssl.trustStorePassword=changeit
     # Graylog service is now proxied by Nginx Load Balancer on Port 9000
     # ports:
     #   - "9000:9000"

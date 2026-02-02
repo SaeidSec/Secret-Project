@@ -18,8 +18,8 @@ This repository provides a production-hardened, multi-node Wazuh SIEM orchestrat
 To install this project perfectly on any Linux device (Ubuntu/CentOS/Debian):
 
 ```bash
-git clone https://github.com/SaeidSec/Docker-base-Enterprise-Grade-Wazuh-SIEM-Advanced-Load-Balancing-and-High-Availability-Architecture.git
-cd Docker-base-Enterprise-Grade-Wazuh-SIEM-Advanced-Load-Balancing-and-High-Availability-Architecture/multi-node
+git clone https://github.com/SaeidSec/Secret-Project.git
+cd Secret-Project/multi-node
 sudo bash bootstrap.sh
 ```
 
