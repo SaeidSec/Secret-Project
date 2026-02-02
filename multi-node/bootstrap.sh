@@ -50,7 +50,6 @@ log_success "System settings optimized."
 
 # --- 4. Directory Preparation ---
 log_info "Preparing directory structure and permissions..."
-# Define required directories for bind mounts
 REQUIRED_DIRS=(
     "config/wazuh_indexer_ssl_certs"
     "config/graylog"
@@ -64,8 +63,6 @@ for dir in "${REQUIRED_DIRS[@]}"; do
     fi
 done
 
-# Fix specific permissions for Graylog (needs UID 1100) and OSSEC
-# If directories were created by docker as root, they might block services
 # Clean up any Docker-created directories where files should be
 find config/wazuh_indexer_ssl_certs -mindepth 1 -maxdepth 1 -type d \( -name "*.pem" -o -name "*.key" \) -exec rm -rf {} +
 
@@ -79,16 +76,27 @@ log_success "Directory structure ready."
 if [ ! -f ".env" ]; then
     log_warn ".env file not found. Creating from .env.example..."
     cp .env.example .env
-    log_info "Created .env. Please review it before starting if you need custom passwords."
 else
-    log_success ".env file exists."
+    # Check if .env is missing critical variables (like LB1_IP)
+    if ! grep -q "LB1_IP" .env; then
+        log_warn ".env file is outdated. Syncing with .env.example (keeping your old values where possible)..."
+        # Simple merge: append missing lines from example to .env
+        while IFS= read -r line; do
+            if [[ $line =~ ^[^#[:space:]]+= ]] && ! grep -q "^${line%%=*}=" .env; then
+                echo "$line" >> .env
+            fi
+        done < .env.example
+        log_success ".env updated."
+    else
+        log_success ".env file is up to date."
+    fi
 fi
 
 # --- 6. Certificate Generation ---
 log_info "Checking SSL Certificates..."
 if [ ! -f "config/wazuh_indexer_ssl_certs/root-ca.pem" ]; then
     log_info "Generating fresh SSL certificates..."
-    docker compose -f generate-indexer-certs.yml run --rm generator
+    sudo docker compose -f generate-indexer-certs.yml run --rm generator
     log_success "Certificates generated."
 else
     log_info "Existing certificates found. Skipping generation."
@@ -101,10 +109,10 @@ chmod 644 config/wazuh_indexer_ssl_certs/*-key.pem || true
 
 # --- 7. Deployment ---
 log_info "Stopping existing services (if any)..."
-docker compose down --remove-orphans > /dev/null 2>&1
+sudo docker compose down --remove-orphans > /dev/null 2>&1
 
 log_info "Launching the Wazuh SIEM stack..."
-docker compose up -d
+sudo docker compose up -d
 
 # --- 8. Post-Check & Health ---
 log_info "Waiting for Wazuh Indexer to initialize..."
@@ -112,7 +120,6 @@ MAX_WAIT=20
 WAIT_COUNT=0
 INDEXER_READY=false
 
-# Use the VIP if configured, otherwise localhost for healthcheck
 VIP=$(grep VIRTUAL_IP .env | cut -d'=' -f2)
 HOST=${VIP:-localhost}
 
@@ -130,9 +137,9 @@ if [ "$INDEXER_READY" = true ]; then
     log_success "Indexer is HEALTHY!"
     
     log_info "Uploading Wazuh Index Template..."
-    MASTER_CONTAINER=$(docker ps --format '{{.Names}}' | grep "wazuh.master" | head -n 1)
+    MASTER_CONTAINER=$(sudo docker ps --format '{{.Names}}' | grep "wazuh.master" | head -n 1)
     if [ -n "$MASTER_CONTAINER" ]; then
-        docker exec "$MASTER_CONTAINER" filebeat setup --index-management \
+        sudo docker exec "$MASTER_CONTAINER" filebeat setup --index-management \
             -E setup.template.overwrite=true \
             -E output.elasticsearch.ssl.verification_mode=none > /dev/null 2>&1
         log_success "Index Template uploaded."
