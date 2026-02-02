@@ -107,6 +107,9 @@ chmod -R 755 config/wazuh_indexer_ssl_certs/
 chmod 644 config/wazuh_indexer_ssl_certs/*.pem || true
 chmod 644 config/wazuh_indexer_ssl_certs/*-key.pem || true
 
+# Ensure strict permissions for Keepalived configs (must NOT be executable)
+chmod 644 config/keepalived/*.conf || true
+
 # --- 7. Deployment ---
 log_info "Stopping existing services (if any)..."
 sudo docker compose down --remove-orphans > /dev/null 2>&1
