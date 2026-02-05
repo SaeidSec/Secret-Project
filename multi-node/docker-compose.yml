@@ -54,6 +54,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./config/trivy/trivy_decoders.xml:/var/ossec/etc/decoders/trivy_decoders.xml:ro
       - ./config/trivy/trivy_rules.xml:/var/ossec/etc/rules/trivy_rules.xml:ro
+      # Filebeat 9.3.0 upgrade
+      - ./filebeat-9.3.0/bin:/usr/share/filebeat/bin:ro
     networks:
       - wazuh-net
     extra_hosts:
@@ -100,6 +102,8 @@ services:
       - cowrie-logs:/var/log/cowrie:ro
       - ./config/wazuh_cluster/beelzebub_rules.xml:/var/ossec/etc/rules/beelzebub_rules.xml:ro
       - ./config/wazuh_cluster/cowrie_rules.xml:/var/ossec/etc/rules/cowrie_rules.xml:ro
+      # Filebeat 9.3.0 upgrade
+      - ./filebeat-9.3.0/bin:/usr/share/filebeat/bin:ro
     networks:
       - wazuh-net
     extra_hosts:
@@ -112,9 +116,9 @@ services:
     expose:
       - "9200"
     environment:
-      - "OPENSEARCH_JAVA_OPTS=${INDEXER_JAVA_OPTS}"
+      - "OPENSEARCH_JAVA_OPTS=${INDEXER_JAVA_OPTS} -Dcompatibility.override_main_response_version=true"
       - "bootstrap.memory_lock=true"
-      - compatibility.override_main_response_version=false
+      - compatibility.override_main_response_version=true
     ulimits:
       memlock:
         soft: -1
@@ -139,9 +143,9 @@ services:
     hostname: wazuh2.indexer
     restart: always
     environment:
-      - "OPENSEARCH_JAVA_OPTS=${INDEXER_JAVA_OPTS}"
+      - "OPENSEARCH_JAVA_OPTS=${INDEXER_JAVA_OPTS} -Dcompatibility.override_main_response_version=true"
       - "bootstrap.memory_lock=true"
-      - compatibility.override_main_response_version=false
+      - compatibility.override_main_response_version=true
     ulimits:
       memlock:
         soft: -1
@@ -164,9 +168,9 @@ services:
     hostname: wazuh3.indexer
     restart: always
     environment:
-      - "OPENSEARCH_JAVA_OPTS=${INDEXER_JAVA_OPTS}"
+      - "OPENSEARCH_JAVA_OPTS=${INDEXER_JAVA_OPTS} -Dcompatibility.override_main_response_version=true"
       - "bootstrap.memory_lock=true"
-      - compatibility.override_main_response_version=false
+      - compatibility.override_main_response_version=true
     ulimits:
       memlock:
         soft: -1

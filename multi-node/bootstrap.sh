@@ -110,7 +110,17 @@ chmod 644 config/wazuh_indexer_ssl_certs/*-key.pem || true
 # Ensure strict permissions for Keepalived configs (must NOT be executable)
 chmod 644 config/keepalived/*.conf || true
 
-# --- 7. Deployment ---
+# --- 7. Filebeat OpenSearch 2.x Compatibility Patch ---
+log_info "Applying Filebeat 9.3.0 patch for OpenSearch compatibility..."
+if [ -f "./patch_filebeat.sh" ]; then
+    bash ./patch_filebeat.sh
+    log_success "Filebeat patch applied."
+else
+    log_error "Filebeat patch script (patch_filebeat.sh) not found!"
+    exit 1
+fi
+
+# --- 8. Deployment ---
 log_info "Stopping existing services (if any)..."
 sudo docker compose down --remove-orphans > /dev/null 2>&1
 

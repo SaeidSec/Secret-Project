@@ -22,17 +22,17 @@ plugins.security.ssl.http.enabled: true
 plugins.security.ssl.transport.enforce_hostname_verification: false
 plugins.security.ssl.transport.resolve_hostname: false
 plugins.security.authcz.admin_dn:
-- "CN=admin,OU=Wazuh,O=Wazuh,L=California,C=US"
+        - "CN=admin,OU=Wazuh,O=Wazuh,L=California,C=US"
 plugins.security.check_snapshot_restore_write_privileges: true
 plugins.security.enable_snapshot_restore_privilege: true
 plugins.security.nodes_dn:
-- "CN=wazuh1.indexer,OU=Wazuh,O=Wazuh,L=California,C=US"
-- "CN=wazuh2.indexer,OU=Wazuh,O=Wazuh,L=California,C=US"
-- "CN=wazuh3.indexer,OU=Wazuh,O=Wazuh,L=California,C=US"
-- "CN=filebeat,OU=Wazuh,O=Wazuh,L=California,C=US"
+        - "CN=wazuh1.indexer,OU=Wazuh,O=Wazuh,L=California,C=US"
+        - "CN=wazuh2.indexer,OU=Wazuh,O=Wazuh,L=California,C=US"
+        - "CN=wazuh3.indexer,OU=Wazuh,O=Wazuh,L=California,C=US"
+        - "CN=filebeat,OU=Wazuh,O=Wazuh,L=California,C=US"
 plugins.security.restapi.roles_enabled:
-- "all_access"
-- "security_rest_api_access"
+        - "all_access"
+        - "security_rest_api_access"
 plugins.security.allow_default_init_securityindex: true
 cluster.routing.allocation.disk.threshold_enabled: false
-compatibility.override_main_response_version: false
+compatibility.override_main_response_version: true

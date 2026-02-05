@@ -20,3 +20,4 @@ logs.txt
 # Large Binaries
 config/trivy/trivy
 config/trivy/docker
+multi-node/filebeat-9.3.0/bin/filebeat.real

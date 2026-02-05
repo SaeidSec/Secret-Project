@@ -1,0 +1,37 @@
+#!/bin/bash
+FILEBEAT_BIN="/usr/share/filebeat/bin/filebeat.real"
+PROXY_SCRIPT="/usr/share/filebeat/bin/opensearch_proxy.py"
+LOG_FILE="/var/log/filebeat_wrapper.log"
+FB_CONFIG="/etc/filebeat/filebeat.yml"
+
+# 1. Start the OpenSearch proxy if not already running
+if ! pgrep -f "$PROXY_SCRIPT" > /dev/null; then
+    python3 "$PROXY_SCRIPT" > /var/log/opensearch_proxy.log 2>&1 &
+    sleep 2
+fi
+
+# 2. Modify filebeat.yml on the fly
+sed -i "s|https://wazuh.vip:9200|http://localhost:9201|g" "$FB_CONFIG"
+sed -i "s|setup.template.json.enabled:.*|setup.template.json.enabled: false|g" "$FB_CONFIG"
+sed -i "s|setup.template.overwrite:.*|setup.template.overwrite: false|g" "$FB_CONFIG"
+if ! grep -q "setup.template.enabled:" "$FB_CONFIG"; then
+    echo "setup.template.enabled: false" >> "$FB_CONFIG"
+else
+    sed -i "s|setup.template.enabled:.*|setup.template.enabled: false|g" "$FB_CONFIG"
+fi
+sed -i "s|setup.ilm.enabled:.*|setup.ilm.enabled: false|g" "$FB_CONFIG"
+sed -i "s|ssl.verification_mode: 'full'|ssl.verification_mode: 'none'|g" "$FB_CONFIG"
+
+# 3. Translate arguments (-path.* to --path.*)
+declare -a args
+for arg in "$@"; do
+    case "$arg" in
+        -path.home) args+=("--path.home") ;;
+        -path.config) args+=("--path.config") ;;
+        -path.data) args+=("--path.data") ;;
+        -path.logs) args+=("--path.logs") ;;
+        *) args+=("$arg") ;;
+    esac
+done
+
+exec "$FILEBEAT_BIN" "${args[@]}"
