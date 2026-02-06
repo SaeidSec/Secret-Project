@@ -199,6 +199,13 @@
     <white_list>^localhost.localdomain$</white_list>
   </global>
 
+  
+    <command>firewall-drop</command>
+    <location>local</location>
+    <rules_id>100501,100503</rules_id>
+    <timeout>3600</timeout>
+ 
+
   <command>
     <name>disable-account</name>
     <executable>disable-account</executable>
@@ -240,13 +247,11 @@
     <timeout_allowed>yes</timeout_allowed>
   </command>
 
+  <!--
   <active-response>
-    <disabled>no</disabled>
-    <command>firewall-drop</command>
-    <location>local</location>
-    <rules_id>5763</rules_id>
-    <timeout>180</timeout>
+    active-response options here
   </active-response>
+  -->
 
   <!-- Log analysis -->
   <localfile>
@@ -266,11 +271,6 @@
     <log_format>full_command</log_format>
     <command>last -n 20</command>
     <frequency>360</frequency>
-  </localfile>
-
-  <localfile>
-    <log_format>json</log_format>
-    <location>/var/log/suricata/eve.json</location>
   </localfile>
 
   <ruleset>

@@ -178,6 +178,13 @@
     <ca_verification>yes</ca_verification>
   </active-response>
 
+  <active-response>
+    <command>firewall-drop</command>
+    <location>local</location>
+    <rules_id>100501,100503</rules_id>
+    <timeout>3600</timeout>
+  </active-response>
+
   <!-- Choose between "plain", "json", or "plain,json" for the format of internal logs -->
   <logging>
     <log_format>plain</log_format>

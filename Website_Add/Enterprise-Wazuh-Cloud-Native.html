@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise Wazuh SIEM | Portfolio Showcase</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #09090b;
+            --card-bg: rgba(24, 24, 27, 0.6);
+            --border: rgba(63, 63, 70, 0.4);
+            --primary: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.3);
+            --secondary: #10b981;
+            --text: #fafafa;
+            --text-dim: #a1a1aa;
+            --accent: #f59e0b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* Hero Section */
+        header {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
+            position: relative;
+        }
+
+        .hero-title {
+            font-size: clamp(3rem, 10vw, 6rem);
+            line-height: 0.9;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #fff 0%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1.1rem, 3vw, 1.5rem);
+            color: var(--text-dim);
+            max-width: 700px;
+            margin-bottom: 3rem;
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .stat-item {
+            background: var(--card-bg);
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-value {
+            display: block;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+        }
+
+        /* Section Styling */
+        section {
+            padding: 100px 0;
+        }
+
+        .section-header {
+            margin-bottom: 4rem;
+            text-align: center;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .section-badge {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--primary);
+            border-radius: 99px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        /* Grid Cards */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 2rem;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 30px -10px var(--primary-glow);
+        }
+
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+        }
+
+        .card h3 {
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+            color: #fff;
+        }
+
+        .card p {
+            color: var(--text-dim);
+            font-size: 0.95rem;
+        }
+
+        /* Architecture Section */
+        .arch-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .arch-visual {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 2rem;
+            border-radius: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .arch-item {
+            margin-bottom: 1.5rem;
+            padding-left: 1rem;
+            border-left: 4px solid var(--primary);
+        }
+
+        .arch-item h4 {
+            color: var(--primary);
+            margin-bottom: 0.2rem;
+        }
+
+        /* Compatibility Highlight */
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
+            border: 1px solid var(--primary);
+            padding: 3rem;
+            border-radius: 30px;
+            margin-top: 4rem;
+            text-align: center;
+        }
+
+        .highlight-box h3 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Footer */
+        footer {
+            padding: 4rem 0;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-dim);
+        }
+
+        .tech-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+
+        .tag {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.6rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .reveal {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-title { font-size: 3.5rem; }
+            section { padding: 60px 0; }
+        }
+    </style>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ 
+            startOnLoad: true, 
+            theme: 'dark',
+            themeVariables: {
+                primaryColor: '#3b82f6',
+                primaryTextColor: '#fff',
+                primaryBorderColor: '#3b82f6',
+                lineColor: '#3b82f6',
+                secondaryColor: '#10b981',
+                tertiaryColor: '#09090b'
+            }
+        });
+    </script>
+    <style>
+        /* Diagram Styling */
+        .diagram-section {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 2rem;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            margin-bottom: 3rem;
+        }
+        .mermaid {
+            background: transparent !important;
+            display: flex;
+            justify-content: center;
+        }
+        .diagram-caption {
+            text-align: center;
+            color: var(--primary);
+            font-weight: 600;
+            margin-top: 1rem;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container reveal">
+            <span class="section-badge">Project Showcase</span>
+            <h1 class="hero-title">Enterprise<br>Wazuh SIEM</h1>
+            <p class="hero-subtitle">A high-availability, multi-node cloud-native security ecosystem featuring AI-powered threat intelligence and automated scalability.</p>
+            
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <span class="stat-value">34</span>
+                    <span class="stat-label">Containers</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">High</span>
+                    <span class="stat-label">Availability</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">13+</span>
+                    <span class="stat-label">Agents</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">100%</span>
+                    <span class="stat-label">Automated</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section id="visuals" style="padding-bottom: 0;">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="section-badge">Deep Visualization</span>
+                <h2 class="section-title">Technical Blueprint</h2>
+                <p>Visualizing the complex logic and flow of the Wazuh ecosystem.</p>
+            </div>
+
+            <div class="diagram-section reveal">
+                <div class="mermaid">
+                    graph TD
+                        subgraph External["External Layer"]
+                            VIP["Virtual IP: 172.25.0.222"]
+                        end
+
+                        subgraph HA["High Availability Layer"]
+                            K1["Keepalived Master"] <--> K2["Keepalived Backup"]
+                            N1["Nginx LB 1"] --- K1
+                            N2["Nginx LB 2"] --- K2
+                        end
+
+                        subgraph App["Application Tier"]
+                            M1["Wazuh Master Manager"]
+                            W1["Wazuh Worker Manager"]
+                            D1["Wazuh Dashboard"]
+                        end
+
+                        subgraph Data["Data Persistence Tier"]
+                            I1["Indexer 1"]
+                            I2["Indexer 2"]
+                            I3["Indexer 3"]
+                        end
+
+                        VIP --> K1
+                        K1 -.-> K2
+                        K1 --> N1
+                        K2 --> N2
+                        N1 --> D1
+                        N1 --> M1
+                        M1 --- W1
+                        M1 --> I1
+                        W1 --> I1
+                        I1 <--> I2 <--> I3
+
+                        style VIP fill:#3b82f6,stroke:#fff,color:#fff
+                        style K1 fill:#1e3a8a,stroke:#3b82f6,color:#fff
+                        style K2 fill:#1e3a8a,stroke:#3b82f6,color:#fff
+                        style M1 fill:#064e3b,stroke:#10b981,color:#fff
+                        style I1 fill:#431407,stroke:#f59e0b,color:#fff
+                </div>
+                <p class="diagram-caption">System Architecture: Logical multi-layer separation</p>
+            </div>
+
+            <div class="grid" style="margin-bottom: 3rem;">
+                <div class="diagram-section reveal">
+                    <div class="mermaid">
+                        sequenceDiagram
+                            participant Agent as Wazuh Agent
+                            participant LB as Load Balancer
+                            participant Manager as Wazuh Manager
+                            participant Indexer as Wazuh Indexer
+                            participant Dashboard as Dashboard
+
+                            Agent->>LB: Send Security Event
+                            LB->>Manager: Forward to Active
+                            Manager->>Manager: Decoding & Rules
+                            Manager->>Indexer: Store (via Proxy)
+                            Indexer-->>Manager: Acknowledge
+                            Dashboard->>Indexer: Query Data
+                            Indexer-->>Dashboard: Return Visualization
+                            Dashboard->>Dashboard: Display Alert
+                    </div>
+                    <p class="diagram-caption">Security Event Lifecycle</p>
+                </div>
+
+                <div class="diagram-section reveal">
+                    <div class="mermaid">
+                        flowchart TD
+                            Start([Health Check]) --> Condition{LB 1 OK?}
+                            Condition -- Yes --> Stay[Normal Operation]
+                            Condition -- No --> Detect[Keepalived Failover]
+                            Detect --> VIPClaim[VIP Claims LB 2]
+                            VIPClaim --> Redirect[Traffic Redirected]
+                            Redirect --> End([Zero Downtime Achieved])
+
+                            style Condition fill:#09090b,stroke:#3b82f6,color:#fff
+                            style Detect fill:#450a0a,stroke:#ef4444,color:#fff
+                            style End fill:#064e3b,stroke:#10b981,color:#fff
+                    </div>
+                    <p class="diagram-caption">Automated Failover Workflow</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="architecture">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="section-badge">The Backbone</span>
+                <h2 class="section-title">Core Architecture</h2>
+                <p>Distributed intelligence across a complex multi-node cluster.</p>
+            </div>
+
+            <div class="arch-container">
+                <div class="arch-visual reveal">
+                    <div class="arch-item">
+                        <h4>Wazuh Cluster</h4>
+                        <p>Hybrid Master/Worker arrangement for horizontal event scaling and processing.</p>
+                    </div>
+                    <div class="arch-item" style="border-left-color: var(--secondary);">
+                        <h4>Data Persistence</h4>
+                        <p>3-Node OpenSearch cluster (Indexer nodes) ensuring quorum and 99.9% data durability.</p>
+                    </div>
+                    <div class="arch-item" style="border-left-color: var(--accent);">
+                        <h4>High Availability</h4>
+                        <p>Virtual IP (VIP) backed by Keepalived VRRP and dual Nginx Load Balancers with SSL termination.</p>
+                    </div>
+                </div>
+                <div class="grid" style="flex: 1;">
+                    <div class="card reveal">
+                        <div class="card-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                        </div>
+                        <h3>Network Tier</h3>
+                        <p>Isolated L2 bridge network with 172.25.0.0/16 subnet, managed via Keepalived for instantaneous failover.</p>
+                    </div>
+                    <div class="card reveal">
+                        <div class="card-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6" y2="6"/><line x1="6" y1="18" x2="6" y2="18"/></svg>
+                        </div>
+                        <h3>Master Manager</h3>
+                        <p>Orchestrates API access, agent enrollment, and global cluster synchronization across worker nodes.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" style="background: rgba(255, 255, 255, 0.02);">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="section-badge">Key Innovations</span>
+                <h2 class="section-title">Technological Edge</h2>
+                <p>Pushing the boundaries of open-source security orchestration.</p>
+            </div>
+
+            <div class="grid">
+                <div class="card reveal">
+                    <div class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </div>
+                    <h3>AI Honeypots</h3>
+                    <p>Beelzebub and Cowrie integration. AI-powered responses to SSH and HTTP attacks, funneling live threat intel into Wazuh rules.</p>
+                </div>
+                <div class="card reveal">
+                    <div class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/></svg>
+                    </div>
+                    <h3>Trivy Scanning</h3>
+                    <p>Automated real-time vulnerability scanning for all system containers via Docker socket integration.</p>
+                </div>
+                <div class="card reveal">
+                    <div class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </div>
+                    <h3>Deep Observability</h3>
+                    <p>Zabbix (13 agents) + Prometheus metrics consolidated into high-fidelity Grafana dashboards for 100% visibility.</p>
+                </div>
+            </div>
+
+            <div class="highlight-box reveal">
+                <span class="section-badge">Engineering Masterpiece</span>
+                <h3>Filebeat 9.3.0 Compatibility Layer</h3>
+                <p style="max-width: 800px; margin: 0 auto 2rem; color: var(--text-dim);">
+                    To bridge the gap between legacy Wazuh managers and modern OpenSearch 2.x clusters, I engineered a Python-based compatibility proxy. It mocks elastic license heartbeats and translates 7.x CLI arguments to 9.x signatures, ensuring flawless data flow in cutting-edge environments.
+                </p>
+                <div class="tech-tags">
+                    <span class="tag">Python 3.x</span>
+                    <span class="tag">Reverse Proxy</span>
+                    <span class="tag">License Mocker</span>
+                    <span class="tag">Argument Translation</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="deployment">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="section-badge">Simplicity at Scale</span>
+                <h2 class="section-title">Universal Bootstrap</h2>
+                <p>Complexity deployed in one command.</p>
+            </div>
+            
+            <div class="grid">
+                <div class="card reveal">
+                    <h3>One-Click Setup</h3>
+                    <p>The `bootstrap.sh` engine handles certificate generation, environment tuning, and the Filebeat 9.3.0 patch automatically.</p>
+                </div>
+                <div class="card reveal">
+                    <h3>Production Ready</h3>
+                    <p>Hardened JVM heap settings, Graylog journal persistence, and PostgreSQL optimization for Zabbix metrics.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 Enterprise Wazuh SIEM Project • Architected by SaeidSec</p>
+            <div class="tech-tags">
+                <span class="tag">Wazuh</span>
+                <span class="tag">OpenSearch</span>
+                <span class="tag">Keepalived</span>
+                <span class="tag">Nginx</span>
+                <span class="tag">Zabbix</span>
+                <span class="tag">Grafana</span>
+                <span class="tag">Prometheus</span>
+                <span class="tag">Graylog</span>
+                <span class="tag">Docker</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Simple reveal animation on scroll
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('reveal');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.reveal').forEach(el => {
+            el.style.opacity = '0';
+            observer.observe(el);
+        });
+
+        // Dynamic gradient movement for header
+        document.addEventListener('mousemove', (e) => {
+            const header = document.querySelector('header');
+            const x = (e.clientX / window.innerWidth) * 100;
+            const y = (e.clientY / window.innerHeight) * 100;
+            header.style.background = `radial-gradient(circle at ${x}% ${y}%, rgba(59, 130, 246, 0.1) 0%, transparent 60%)`;
+        });
+    </script>
+</body>
+</html>

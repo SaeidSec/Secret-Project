@@ -1,0 +1,185 @@
+%YAML 1.1
+---
+suricata-version: "6.0"
+
+vars:
+  address-groups:
+    HOME_NET: "[192.168.0.0/16,10.0.0.0/8,172.16.0.0/12]"
+    EXTERNAL_NET: "!$HOME_NET"
+    HTTP_SERVERS: "$HOME_NET"
+    SMTP_SERVERS: "$HOME_NET"
+    SQL_SERVERS: "$HOME_NET"
+    DNS_SERVERS: "$HOME_NET"
+    TELNET_SERVERS: "$HOME_NET"
+    AIM_SERVERS: "$EXTERNAL_NET"
+    DNP3_SERVER: "$HOME_NET"
+    DNP3_CLIENT: "$HOME_NET"
+    MODBUS_CLIENT: "$HOME_NET"
+    MODBUS_SERVER: "$HOME_NET"
+    ENIP_CLIENT: "$HOME_NET"
+    ENIP_SERVER: "$HOME_NET"
+
+  port-groups:
+    HTTP_PORTS: "80"
+    SHELLCODE_PORTS: "!80"
+    ORACLE_PORTS: 1521
+    SSH_PORTS: 22
+    DNP3_PORTS: 20000
+    MODBUS_PORTS: 502
+    FILE_DATA_PORTS: "[$HTTP_PORTS,110,143]"
+    FTP_PORTS: 21
+    GENEVE_PORTS: 6081
+    VXLAN_PORTS: 4789
+    TEREDO_PORTS: 3544
+
+default-rule-path: /var/lib/suricata/rules
+rule-files:
+  - suricata.rules
+
+outputs:
+  - eve-log:
+      enabled: yes
+      filetype: regular
+      filename: eve.json
+      types:
+        - alert:
+            payload: yes # enable dumping payload in Base64
+            payload-buffer-size: 4kb # max size of payload buffer to output in eve-log
+            payload-printable: yes # enable dumping payload in printable (lossy) format
+            packet: yes # enable dumping of packet (without stream segments)
+            http-body: yes # enable dumping of http body in Base64
+            http-body-printable: yes # enable dumping of http body in printable format
+            tagged-packets: yes # enable output of packets with specific tags (see tagging section below)
+
+        - anomaly:
+            enabled: yes
+            types:
+              - decode
+              - stream
+              - applayer
+            packethdr: yes
+
+        - http:
+            extended: yes # enable this for extended logging information
+
+        - dns:
+            # control logging of queries and answers
+            # default yes, no to disable
+            query: yes # enable logging of DNS queries
+            answer: yes # enable logging of DNS answers
+
+        - tls:
+            extended: yes # enable this for extended logging information
+
+        - files:
+            force-magic: no # force monitoring all traffic for files
+
+        - smtp:
+            #extended: yes # enable this for extended logging information
+
+        - ssh
+
+        - stats:
+            totals: yes
+            threads: no
+            deltas: no
+
+        - flow
+
+  - fast:
+      enabled: yes
+      filename: fast.log
+      append: yes
+
+  - stats:
+      enabled: yes
+      filename: stats.log
+      interval: 8
+
+logging:
+  default-log-level: notice
+  default-output-filter:
+  outputs:
+    - console:
+        enabled: yes
+    - file:
+        enabled: yes
+        level: info
+        filename: suricata.log
+
+af-packet:
+  - interface: wlan0
+    cluster-id: 99
+    cluster-type: cluster_flow
+    defrag: yes
+    use-mmap: yes
+    tpacket-v3: yes
+
+app-layer:
+  protocols:
+    krb5:
+      enabled: yes
+    ikev2:
+      enabled: yes
+    tls:
+      enabled: yes
+      detection-ports:
+        dp: 443
+    dcerpc:
+      enabled: yes
+    ftp:
+      enabled: yes
+    ssh:
+      enabled: yes
+    smtp:
+      enabled: yes
+    imap:
+      enabled: yes
+      detection-ports:
+        dp: 143
+    msn:
+      enabled: yes
+    smb:
+      enabled: yes
+      detection-ports:
+        dp: 139, 445
+    nfs:
+      enabled: yes
+    tfth:
+      enabled: yes
+    dns:
+      tcp:
+        enabled: yes
+        detection-ports:
+          dp: 53
+      udp:
+        enabled: yes
+        detection-ports:
+          dp: 53
+    http:
+      enabled: yes
+    modbus:
+      enabled: yes
+    dnp3:
+      enabled: yes
+    enip:
+      enabled: yes
+    ntp:
+      enabled: yes
+
+legacy:
+  uricontent: enabled
+
+detect:
+  profile: medium
+  custom-values:
+    tny-c-pcre-match-limit: 3500
+    tny-c-pcre-match-limit-recursion: 1500
+
+profiling:
+  rules:
+    enabled: yes
+    filename: rule_perf.log
+    append: yes
+    limit: 10
+    sort: avgticks

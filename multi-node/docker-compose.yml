@@ -56,6 +56,8 @@ services:
       - ./config/trivy/trivy_rules.xml:/var/ossec/etc/rules/trivy_rules.xml:ro
       # Filebeat 9.3.0 upgrade
       - ./filebeat-9.3.0/bin:/usr/share/filebeat/bin:ro
+      # Suricata Integration
+      - suricata-logs:/var/log/suricata:ro
     networks:
       - wazuh-net
     extra_hosts:
@@ -104,6 +106,28 @@ services:
       - ./config/wazuh_cluster/cowrie_rules.xml:/var/ossec/etc/rules/cowrie_rules.xml:ro
       # Filebeat 9.3.0 upgrade
       - ./filebeat-9.3.0/bin:/usr/share/filebeat/bin:ro
+      # Suricata Integration
+      - suricata-logs:/var/log/suricata:ro
+    networks:
+      - wazuh-net
+    extra_hosts:
+      - "${WAZUH_VIP_HOSTNAME}:${VIRTUAL_IP}"
+
+  wazuh-proxy:
+    build:
+      context: ./wazuh-proxy
+    image: wazuh-proxy:latest
+    hostname: wazuh-proxy
+    restart: always
+    environment:
+      - TARGET_URL=https://${WAZUH_VIP_HOSTNAME}:9200
+      - CA_CERT=/etc/ssl/root-ca.pem
+      - CLIENT_CERT=/etc/ssl/filebeat.pem
+      - CLIENT_KEY=/etc/ssl/filebeat.key
+    volumes:
+      - ./config/wazuh_indexer_ssl_certs/root-ca.pem:/etc/ssl/root-ca.pem:ro
+      - ./config/wazuh_indexer_ssl_certs/wazuh.master.pem:/etc/ssl/filebeat.pem:ro
+      - ./config/wazuh_indexer_ssl_certs/wazuh.master-key.pem:/etc/ssl/filebeat.key:ro
     networks:
       - wazuh-net
     extra_hosts:
@@ -766,10 +790,26 @@ services:
       - ZBX_PASSIVE_ALLOW=true
       - ZBX_ACTIVE_ALLOW=true
 
+  # Suricata IDS
+  suricata:
+    image: jasonish/suricata:latest
+    container_name: suricata
+    restart: always
+    network_mode: "host" # Suricata needs to see host traffic
+    cap_add:
+      - NET_ADMIN
+      - SYS_NICE
+      - NET_RAW
+    volumes:
+      - ./config/suricata/suricata.yaml:/etc/suricata/suricata.yaml
+      - suricata-logs:/var/log/suricata
+    command: sh -c "suricata-update --no-test; suricata -c /etc/suricata/suricata.yaml -i wlan0"
+
 volumes:
   mongodb_data:
   graylog_data:
   graylog_journal:
+  suricata-logs:
   beelzebub-logs:
   cowrie-logs:
   master-wazuh-api-configuration:
