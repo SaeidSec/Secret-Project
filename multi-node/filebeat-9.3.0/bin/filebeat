@@ -1,17 +1,12 @@
 #!/bin/bash
 FILEBEAT_BIN="/usr/share/filebeat/bin/filebeat.real"
-PROXY_SCRIPT="/usr/share/filebeat/bin/opensearch_proxy.py"
-LOG_FILE="/var/log/filebeat_wrapper.log"
 FB_CONFIG="/etc/filebeat/filebeat.yml"
 
-# 1. Start the OpenSearch proxy if not already running
-if ! pgrep -f "$PROXY_SCRIPT" > /dev/null; then
-    python3 "$PROXY_SCRIPT" > /var/log/opensearch_proxy.log 2>&1 &
-    sleep 2
-fi
+# 1. Modify filebeat.yml on the fly
+# Point to the wazuh-proxy container securely
+sed -i "s|https://wazuh.vip:9200|https://wazuh-proxy:9201|g" "$FB_CONFIG"
 
-# 2. Modify filebeat.yml on the fly
-sed -i "s|https://wazuh.vip:9200|http://localhost:9201|g" "$FB_CONFIG"
+# Disable template management as per requirement
 sed -i "s|setup.template.json.enabled:.*|setup.template.json.enabled: false|g" "$FB_CONFIG"
 sed -i "s|setup.template.overwrite:.*|setup.template.overwrite: false|g" "$FB_CONFIG"
 if ! grep -q "setup.template.enabled:" "$FB_CONFIG"; then
@@ -20,9 +15,27 @@ else
     sed -i "s|setup.template.enabled:.*|setup.template.enabled: false|g" "$FB_CONFIG"
 fi
 sed -i "s|setup.ilm.enabled:.*|setup.ilm.enabled: false|g" "$FB_CONFIG"
-sed -i "s|ssl.verification_mode: 'full'|ssl.verification_mode: 'none'|g" "$FB_CONFIG"
 
-# 3. Translate arguments (-path.* to --path.*)
+# ENFORCE SSL Verification (Production Security)
+# We now require full verification because wazuh-proxy is a proper service with certs
+# Note: wazuh-proxy typically uses the same certs as wazuh.master for simplicity in this bridge,
+# or we can rely on the CA trusting it.
+# For now, we set it to 'full' and point to the CA.
+sed -i "s|ssl.verification_mode: 'none'|ssl.verification_mode: 'full'|g" "$FB_CONFIG"
+
+# Ensure CA and Certs are correctly referenced if they aren't already
+# (The docker-compose mounts these to /etc/ssl/, and filebeat.yml usually expects them there)
+# If the original filebeat.yml had specific paths, we might need to adjust them, 
+# but usually wazuh-docker config key/cert paths are standard.
+# We'll explicitly set them just in case.
+
+if ! grep -q "ssl.certificate_authorities" "$FB_CONFIG"; then
+    echo "ssl.certificate_authorities: ['/etc/ssl/root-ca.pem']" >> "$FB_CONFIG"
+    echo "ssl.certificate: '/etc/ssl/filebeat.pem'" >> "$FB_CONFIG"
+    echo "ssl.key: '/etc/ssl/filebeat.key'" >> "$FB_CONFIG"
+fi
+
+# 2. Translate arguments (-path.* to --path.*)
 declare -a args
 for arg in "$@"; do
     case "$arg" in
