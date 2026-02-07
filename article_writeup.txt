@@ -95,4 +95,22 @@ graph TD
 --------------------------------------------------------------------------------
 4. HOW IT WORKS (DETAILED WORKFLOW SEQUENCE)
 --------------------------------------------------------------------------------
-The security lifecycle involves complex handshakes and data transformations across multiple protocols. Below is the technical breakdown of how a detection event travels from an endpoint to the analysts
+The security lifecycle involves complex handshakes and data transformations across multiple protocols. Below is the technical breakdown of how a detection event travels from an endpoint to the analysts.
+
+--------------------------------------------------------------------------------
+5. WAZUH-PROXY REFACTORING: STRENGTHS & WEAKNESSES
+--------------------------------------------------------------------------------
+The refactoring of the OpenSearch compatibility gateway (the wazuh-proxy) from a legacy script into a production-grade microservice introduces several significant strengths while addressing the critical vulnerabilities of the previous implementation.
+
+STRENGTHS:
+- Zero-Trust Security Framework: Implements Mutual TLS (mTLS) and upstream verification, preventing unauthorized data injection and MitM attacks.
+- High Performance and Scalability: FastAPI/Uvicorn stack with Asynchronous I/O handles thousands of concurrent requests with minimal memory footprint.
+- Granular Policy Enforcement: Filters HTTP methods to block destructive commands (DELETE) and sensitive cluster settings.
+- Backend Resilience: Rate limiting via token-bucket algorithm protects the storage backend from ingestion storms.
+- Improved Observability: Structured JSON logging for effective auditing and debugging.
+
+WEAKNESSES & CHALLENGES:
+- Complexity of Infrastructure: Requires a robust Internal Certificate Authority (CA) for mTLS management.
+- Configuration Sensitivity: Depends on strict client-side configuration (e.g., Filebeat SSL settings).
+- Single Point of Policy Management: Centralized control means misconfiguration can block legitimate security data ecosystem-wide.
+- Legacy Debt: While fixed, the transition required addressing blocking I/O and lack of authentication in the pre-refactoring state.

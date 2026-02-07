@@ -1,0 +1,29 @@
+upstream:
+  targets:
+    - url: "https://wazuh.vip:9200"
+      weight: 1
+    - url: "https://wazuh1.indexer:9200"
+      weight: 1
+    - url: "https://wazuh2.indexer:9200"
+      weight: 1
+  timeout: 30.0
+  retry_count: 3
+  health_check_interval: 10
+
+security:
+  mtls:
+    ca_cert: "/etc/ssl/root-ca.pem"
+    client_cert: "/etc/ssl/filebeat.pem"
+    client_key: "/etc/ssl/filebeat.key"
+  policies:
+    - path: "/_cluster"
+      allowed_methods: ["GET", "HEAD"]
+    - path: "/_bulk"
+      max_size_mb: 100
+    - path: "*"
+      blocked_methods: ["DELETE"]
+
+monitoring:
+  enabled: true
+  metrics_path: "/stats"
+  log_level: "INFO"
