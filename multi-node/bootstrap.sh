@@ -28,7 +28,30 @@ fi
 
 log_info "Starting Infrastructure preparation..."
 
-# --- 2. Dependency Checks ---
+# --- 2. Host Resource Verification ---
+log_info "Verifying system requirements..."
+TOTAL_RAM=$(free -g | awk '/^Mem:/{print $2}')
+CPU_CORES=$(nproc)
+
+if [ "$TOTAL_RAM" -lt 16 ]; then
+    log_warn "System has less than 16GB RAM ($TOTAL_RAM GB). Performance may be degraded."
+else
+    log_success "RAM Check: $TOTAL_RAM GB detected."
+fi
+
+if [ "$CPU_CORES" -lt 4 ]; then
+    log_warn "System has less than 4 CPU cores ($CPU_CORES detected). Heavy traffic might cause stalls."
+else
+    log_success "CPU Check: $CPU_CORES cores detected."
+fi
+
+# --- 3. Dependency Checks & Cleanup ---
+log_info "Cleaning up legacy/backup files..."
+find . -name "*.save" -delete
+find . -name "*.bak" -delete
+find . -name "__pycache__" -type d -exec rm -rf {} +
+log_success "Cleanup complete."
+
 log_info "Checking dependencies..."
 for cmd in docker docker-compose; do
     if ! command -v $cmd &> /dev/null; then

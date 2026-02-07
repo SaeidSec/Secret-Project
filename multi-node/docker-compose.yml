@@ -1,9 +1,22 @@
-# Wazuh App Copyright (C) 2017, Wazuh Inc. (License GPLv2)
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "50m"
+    max-file: "3"
+
 services:
   wazuh.master:
     image: wazuh/wazuh-manager:${WAZUH_VERSION}
     hostname: wazuh.master
     restart: always
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: "2"
+    security_opt:
+      - no-new-privileges:true
     ulimits:
       memlock:
         soft: -1
@@ -119,6 +132,14 @@ services:
     image: wazuh-proxy:latest
     hostname: wazuh-proxy
     restart: always
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+    security_opt:
+      - no-new-privileges:true
     environment:
       - CONFIG_PATH=/app/config.yaml
     volumes:
@@ -189,6 +210,14 @@ services:
     image: wazuh/wazuh-indexer:${INDEXER_VERSION}
     hostname: wazuh3.indexer
     restart: always
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: "2"
+    security_opt:
+      - no-new-privileges:true
     environment:
       - "OPENSEARCH_JAVA_OPTS=${INDEXER_JAVA_OPTS} -Dcompatibility.override_main_response_version=true"
       - "bootstrap.memory_lock=true"
@@ -418,6 +447,14 @@ services:
     image: zabbix/zabbix-web-nginx-pgsql:alpine-7.0-latest
     hostname: zabbix-web
     restart: always
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+    security_opt:
+      - no-new-privileges:true
     expose:
       - "8080"
     environment:
@@ -730,6 +767,14 @@ services:
     image: mongo:7.0
     hostname: mongodb
     restart: always
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "0.5"
+    security_opt:
+      - no-new-privileges:true
     volumes:
       - mongodb_data:/data/db
     networks:
@@ -740,6 +785,14 @@ services:
     image: graylog/graylog:${GRAYLOG_VERSION}
     hostname: graylog
     restart: always
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "1"
+    security_opt:
+      - no-new-privileges:true
     environment:
       - GRAYLOG_NODE_ID_FILE=/usr/share/graylog/data/config/node-id
       - GRAYLOG_PASSWORD_SECRET=${GRAYLOG_PASSWORD_SECRET}
