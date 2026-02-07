@@ -161,6 +161,14 @@ else
     log_warn "Indexer took too long to start. Please check 'docker compose logs wazuh1.indexer' later."
 fi
 
+# --- 9. Wazuh Proxy Health Check ---
+log_info "Verifying Wazuh-Proxy (v3.0) status..."
+if curl -s http://localhost:9201/stats | grep -q '"status":"online"'; then
+    log_success "Wazuh-Proxy is UP and PROTECTING upstreams!"
+else
+    log_warn "Wazuh-Proxy health check failed. Check 'docker compose logs wazuh-proxy'."
+fi
+
 echo -e "\n${GREEN}================================================================${NC}"
 echo -e "${GREEN}🎉 DEPLOYMENT READY!${NC}"
 echo -e "${BLUE}Virtual IP: ${HOST}${NC}"

@@ -22,3 +22,5 @@ nodes:
   dashboard:
     - name: wazuh.dashboard
       ip: wazuh.dashboard
+    - name: wazuh-proxy
+      ip: wazuh-proxy

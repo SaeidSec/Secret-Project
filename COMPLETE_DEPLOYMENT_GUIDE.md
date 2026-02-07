@@ -544,4 +544,19 @@ Your Enterprise-Grade Wazuh SIEM is now deployed and ready for use!
 
 ---
 
+## 🏗️ Production Hardening & Resilience
+
+This deployment is engineered for **Zero-Hassle Production Readiness**. Key infrastructure improvements include:
+
+### 1. Unified Certificate Management
+- The `wazuh-proxy` is a first-class citizen in the SSL schema.
+- Certificates are automatically generated, signed by the Internal CA, and rotated seamlessly via `bootstrap.sh`.
+
+### 2. High-Availability Wazuh Proxy (v3.0)
+- **Circuit Breakers**: Prevents cascading failures by detecting unhealthy indexers.
+- **Hot-Reloading**: Security policies and certificates are reloaded without service downtime.
+- **Micro-API Monitoring**: The `bootstrap.sh` script monitors the proxy's internal health via the `/stats` endpoint.
+
+---
+
 **🛡️ Your SIEM infrastructure is now operational with high availability, advanced monitoring, and active defense capabilities!**

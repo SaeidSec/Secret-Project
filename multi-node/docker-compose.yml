@@ -120,14 +120,12 @@ services:
     hostname: wazuh-proxy
     restart: always
     environment:
-      - TARGET_URL=https://${WAZUH_VIP_HOSTNAME}:9200
-      - CA_CERT=/etc/ssl/root-ca.pem
-      - CLIENT_CERT=/etc/ssl/filebeat.pem
-      - CLIENT_KEY=/etc/ssl/filebeat.key
+      - CONFIG_PATH=/app/config.yaml
     volumes:
+      - ./wazuh-proxy/config.yaml:/app/config.yaml:ro
       - ./config/wazuh_indexer_ssl_certs/root-ca.pem:/etc/ssl/root-ca.pem:ro
-      - ./config/wazuh_indexer_ssl_certs/wazuh.master.pem:/etc/ssl/filebeat.pem:ro
-      - ./config/wazuh_indexer_ssl_certs/wazuh.master-key.pem:/etc/ssl/filebeat.key:ro
+      - ./config/wazuh_indexer_ssl_certs/wazuh-proxy.pem:/etc/ssl/filebeat.pem:ro
+      - ./config/wazuh_indexer_ssl_certs/wazuh-proxy-key.pem:/etc/ssl/filebeat.key:ro
     networks:
       - wazuh-net
     extra_hosts:
