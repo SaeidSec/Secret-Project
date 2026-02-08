@@ -1,10 +1,10 @@
 upstream:
   targets:
-    - url: "https://wazuh.vip:9200"
-      weight: 1
     - url: "https://wazuh1.indexer:9200"
       weight: 1
     - url: "https://wazuh2.indexer:9200"
+      weight: 1
+    - url: "https://wazuh3.indexer:9200"
       weight: 1
   timeout: 30.0
   retry_count: 3

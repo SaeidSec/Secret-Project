@@ -4,7 +4,8 @@ FB_CONFIG="/etc/filebeat/filebeat.yml"
 
 # 1. Modify filebeat.yml on the fly
 # Point to the wazuh-proxy container securely
-sed -i "s|https://wazuh.vip:9200|https://wazuh-proxy:9201|g" "$FB_CONFIG"
+sed -i "s|https://wazuh.vip:9200|https://wazuh-proxy.local:9201|g" "$FB_CONFIG"
+sed -i "s|https://wazuh-proxy:9201|https://wazuh-proxy.local:9201|g" "$FB_CONFIG"
 
 # Disable template management as per requirement
 sed -i "s|setup.template.json.enabled:.*|setup.template.json.enabled: false|g" "$FB_CONFIG"

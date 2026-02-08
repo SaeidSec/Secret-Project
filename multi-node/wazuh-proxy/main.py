@@ -50,7 +50,7 @@ class ConfigManager:
                 self.ssl_context.load_cert_chain(certfile=client_cert, keyfile=client_key)
                 logger.info("mTLS client certificate loaded.")
             
-        self.ssl_context.check_hostname = True
+        self.ssl_context.check_hostname = False
         self.ssl_context.verify_mode = ssl.CERT_REQUIRED
 
     async def watch_config(self):
@@ -99,7 +99,7 @@ class UpstreamManager:
                 try:
                     async with httpx.AsyncClient(verify=self.config_manager.ssl_context, timeout=5.0) as client:
                         resp = await client.get(url)
-                        if resp.status_code == 200:
+                        if resp.status_code in [200, 401]:
                             if not self.health_status[url]:
                                 logger.info(f"Target recovered (HEALTHY): {url}")
                             self.health_status[url] = True
@@ -165,6 +165,7 @@ async def security_middleware(request: Request, call_next):
     # Store body in request state so it can be reused in proxy_request
     request.state.body = body
     response = await call_next(request)
+    response.headers["X-Elastic-Product"] = "Elasticsearch"
     return response
 
 @app.get("/stats")
@@ -214,7 +215,7 @@ async def proxy_request(path_name: str, request: Request, response: Response):
                 if k.lower() not in ["transfer-encoding", "connection", "content-length"]:
                      response.headers[k] = v
             
-            return upstream_response.content
+            return Response(content=upstream_response.content, status_code=upstream_response.status_code, headers=dict(response.headers))
             
     except httpx.RequestError as exc:
         logger.error(f"Upstream Error ({url}): {exc}")

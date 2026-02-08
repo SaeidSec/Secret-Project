@@ -23,4 +23,4 @@ nodes:
     - name: wazuh.dashboard
       ip: wazuh.dashboard
     - name: wazuh-proxy
-      ip: wazuh-proxy
+      ip: wazuh-proxy.local

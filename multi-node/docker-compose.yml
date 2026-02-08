@@ -148,7 +148,9 @@ services:
       - ./config/wazuh_indexer_ssl_certs/wazuh-proxy.pem:/etc/ssl/filebeat.pem:ro
       - ./config/wazuh_indexer_ssl_certs/wazuh-proxy-key.pem:/etc/ssl/filebeat.key:ro
     networks:
-      - wazuh-net
+      wazuh-net:
+        aliases:
+          - wazuh-proxy.local
     extra_hosts:
       - "${WAZUH_VIP_HOSTNAME}:${VIRTUAL_IP}"
 
